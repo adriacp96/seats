@@ -265,7 +265,7 @@
             const food = foodBtn ? foodBtn.dataset.item : '';
             
             let drink = '';
-            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.item-btn.selected');
+            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
             if (selectedDrinkBtn) {
                 let drinkString = selectedDrinkBtn.dataset.item;
                 const modifiers = [];
@@ -534,16 +534,18 @@
                 const modifiers = [];
                 const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
                 
-                parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
-                    modifiers.push(btn.dataset.modifier);
-                });
-                const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
-                if (mixerBtn) {
-                    drinkString += ` with ${mixerBtn.dataset.item}`;
-                }
+                if (parentAccordion) {
+                    parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
+                        modifiers.push(btn.dataset.modifier);
+                    });
+                    const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
+                    if (mixerBtn) {
+                        drinkString += ` with ${mixerBtn.dataset.item}`;
+                    }
 
-                if (modifiers.length > 0) {
-                    drinkString += ` (${modifiers.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')})`;
+                    if (modifiers.length > 0) {
+                        drinkString += ` (${modifiers.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')})`;
+                    }
                 }
                 drink = drinkString;
             }
