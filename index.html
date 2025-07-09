@@ -395,20 +395,40 @@
         function createCabinLayout() {
             const rows = [14, 15, 16];
             const seatConfig = [ { seats: ['A', 'B'], aisle: true }, { seats: ['D', 'E', 'F'], aisle: true }, { seats: ['J', 'K'], aisle: false }];
+            cabinLayout.innerHTML = ''; // Clear previous layout
             rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
                 rowEl.className = 'flex items-center justify-center space-x-1 sm:space-x-2 w-full';
-                rowEl.innerHTML += `<div class="w-6 sm:w-8 font-bold text-gray-500 text-sm sm:text-lg">${rowNum}</div>`;
+                
+                const leftLabel = document.createElement('div');
+                leftLabel.className = 'w-6 sm:w-8 font-bold text-gray-500 text-sm sm:text-lg';
+                leftLabel.textContent = rowNum;
+                rowEl.appendChild(leftLabel);
+
                 seatConfig.forEach(group => {
                     const groupEl = document.createElement('div');
                     groupEl.className = 'flex space-x-1 sm:space-x-2';
                     group.seats.forEach(seatLetter => {
-                        groupEl.innerHTML += `<div class="seat w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center font-bold text-sm sm:text-lg bg-white border-2 border-blue-500 rounded-lg cursor-pointer hover:bg-blue-100 flex-shrink-0">${seatLetter}</div>`;
+                        const seatEl = document.createElement('div');
+                        seatEl.className = 'seat w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center font-bold text-sm sm:text-lg bg-white border-2 border-blue-500 rounded-lg cursor-pointer hover:bg-blue-100 flex-shrink-0';
+                        seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
+                        seatEl.textContent = seatLetter;
+                        groupEl.appendChild(seatEl);
                     });
                     rowEl.appendChild(groupEl);
-                    if (group.aisle) rowEl.innerHTML += `<div class="w-2 sm:w-4 md:w-8"></div>`;
+
+                    if (group.aisle) {
+                        const aisleEl = document.createElement('div');
+                        aisleEl.className = 'w-2 sm:w-4 md:w-8';
+                        rowEl.appendChild(aisleEl);
+                    }
                 });
-                rowEl.innerHTML += `<div class="w-6 sm:w-8 font-bold text-gray-500 text-sm sm:text-lg">${rowNum}</div>`;
+
+                const rightLabel = document.createElement('div');
+                rightLabel.className = 'w-6 sm:w-8 font-bold text-gray-500 text-sm sm:text-lg';
+                rightLabel.textContent = rowNum;
+                rowEl.appendChild(rightLabel);
+
                 cabinLayout.appendChild(rowEl);
             });
         }
@@ -499,6 +519,10 @@
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
+            if (!seatId) {
+                console.error("Save aborted: seatId is invalid.");
+                return;
+            }
             
             const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
             const food = foodBtn ? foodBtn.dataset.item : '';
@@ -524,13 +548,12 @@
                 drink = drinkString;
             }
 
-            if (!seatId || (!food && !drink)) {
+            if (!food && !drink) {
                 console.log("Save aborted: No items selected.");
                 return;
             }
 
             const orderData = {
-                seat: seatId,
                 food: food,
                 drink: drink,
                 status: ordersCache[seatId]?.status || 'ordered',
