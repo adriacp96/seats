@@ -166,7 +166,7 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'EK-DEMO';
         
         const FOOD_MENU = {
-            items: ["Chicken", "Pasta"]
+            items: ["Chicken", "Beef"]
         };
 
         const DRINK_MENU = {
@@ -528,7 +528,7 @@
             const food = foodBtn ? foodBtn.dataset.item : '';
 
             let drink = '';
-            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.item-btn.drink-item-btn.selected');
+            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
             if (selectedDrinkBtn) {
                 let drinkString = selectedDrinkBtn.dataset.item;
                 const modifiers = [];
