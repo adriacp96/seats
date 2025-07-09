@@ -52,13 +52,6 @@
             color: #065F46; /* green-800 */
             font-weight: 600;
         }
-        .live-order-item {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -116,24 +109,11 @@
                 <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
                     
-                    <!-- Current Order -->
-                    <div id="live-order-summary" class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h3 class="font-semibold text-blue-800 text-lg">Current Order</h3>
-                        <div id="live-order-list" class="mt-2 space-y-2">
-                             <p class="text-gray-500 italic">Select items below to add them to the order.</p>
-                        </div>
-                    </div>
-
                     <!-- Food Selection -->
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2"><i class="fa-solid fa-utensils mr-2"></i>Food</h3>
-                        <div class="flex items-center space-x-3">
-                            <select id="food-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">None</option>
-                                <option value="Chicken">Chicken</option>
-                                <option value="Pasta">Pasta</option>
-                            </select>
-                            <button type="button" id="add-food-btn" class="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Set Food</button>
+                        <div id="food-selection-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <!-- Food buttons will be populated here -->
                         </div>
                     </div>
 
@@ -147,11 +127,16 @@
             </div>
 
             <div class="flex-shrink-0 p-4 sm:p-6 border-t bg-gray-50 rounded-b-xl">
+                 <!-- Order Summary -->
+                <div id="modal-summary" class="p-3 mb-4 bg-white rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-gray-700">Current Selection:</h4>
+                    <p id="summary-text" class="text-sm text-gray-600 mt-1 italic">Make a selection...</p>
+                </div>
                 <div class="flex justify-between items-center">
                     <button type="button" id="delete-order-btn" class="text-red-600 hover:text-red-800 font-medium">Delete Order</button>
                     <div>
                         <button type="button" id="cancel-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mr-2">Cancel</button>
-                        <button type="button" id="save-order-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
+                        <button type="submit" form="order-form" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
                     </div>
                 </div>
             </div>
@@ -205,16 +190,14 @@
         const orderModalTitle = document.getElementById('order-modal-title');
         const orderForm = document.getElementById('order-form');
         const seatIdInput = document.getElementById('seat-id-input');
-        const foodSelect = document.getElementById('food-select');
-        const addFoodBtn = document.getElementById('add-food-btn');
+        const foodSelectionContainer = document.getElementById('food-selection-container');
         const cancelBtn = document.getElementById('cancel-btn');
         const cancelBtnX = document.getElementById('cancel-btn-x');
         const deleteOrderBtn = document.getElementById('delete-order-btn');
         const drinkCategoryContainer = document.getElementById('drink-category-container');
         const drinkAccordionContainer = document.getElementById('drink-accordion-container');
-        const liveOrderList = document.getElementById('live-order-list');
+        const summaryText = document.getElementById('summary-text');
         const clearAllBtn = document.getElementById('clear-all-btn');
-        const saveOrderBtn = document.getElementById('save-order-btn');
         // Confirmation Modal Elements
         const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
         const confirmModal = document.getElementById('confirm-modal');
@@ -244,6 +227,12 @@
         }
 
         function populateMenus() {
+            // Populate Food Menu
+            foodSelectionContainer.innerHTML = '';
+            FOOD_MENU.items.forEach(item => {
+                foodSelectionContainer.innerHTML += `<button type="button" class="item-btn p-3 border rounded-lg text-center hover:border-blue-400" data-item="${item}">${item}</button>`;
+            });
+
             // Populate Drink Menu
             drinkCategoryContainer.innerHTML = '';
             drinkAccordionContainer.innerHTML = '';
@@ -262,35 +251,45 @@
                 accordion.innerHTML = `
                     <div class="p-3 bg-gray-50 rounded-lg border">
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            ${details.items.map(item => `<button type="button" class="drink-item-btn p-2 border rounded-md text-center hover:border-blue-400" data-item="${item}">${item}</button>`).join('')}
+                            ${details.items.map(item => `<button type="button" class="item-btn drink-item-btn p-2 border rounded-md text-center hover:border-blue-400" data-item="${item}">${item}</button>`).join('')}
                         </div>
                         <div class="modifiers-container mt-4"></div>
-                        <div class="flex justify-end mt-4">
-                            <button type="button" class="add-drink-btn px-4 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600">Add Drink</button>
-                        </div>
                     </div>
                 `;
                 drinkAccordionContainer.appendChild(accordion);
             });
         }
 
-        function renderItemInLiveList(item) {
-            const placeholder = liveOrderList.querySelector('.italic');
-            if (placeholder) placeholder.remove();
-
-            const itemEl = document.createElement('div');
-            itemEl.className = 'live-order-item flex justify-between items-center p-2 bg-white rounded-md border';
-            itemEl.dataset.itemId = item.id;
+        function updateModalSummary() {
+            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
+            const food = foodBtn ? foodBtn.dataset.item : '';
             
-            const icon = item.type === 'food' ? 'fa-utensils' : 'fa-martini-glass';
-            itemEl.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fa-solid ${icon} mr-3 text-gray-500"></i>
-                    <span class="text-gray-800">${item.name}</span>
-                </div>
-                <button type="button" class="remove-item-btn text-red-500 hover:text-red-700 font-bold text-xl leading-none">&times;</button>
-            `;
-            liveOrderList.appendChild(itemEl);
+            let drink = '';
+            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.item-btn.selected');
+            if (selectedDrinkBtn) {
+                let drinkString = selectedDrinkBtn.dataset.item;
+                const modifiers = [];
+                const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
+                
+                parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
+                    modifiers.push(btn.dataset.modifier);
+                });
+                const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
+                if (mixerBtn) {
+                    drinkString += ` with ${mixerBtn.dataset.item}`;
+                }
+
+                if (modifiers.length > 0) {
+                    drinkString += ` (${modifiers.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')})`;
+                }
+                drink = drinkString;
+            }
+
+            if (!food && !drink) {
+                summaryText.textContent = 'Make a selection...';
+            } else {
+                summaryText.textContent = `${food ? `Food: ${food}` : ''}${food && drink ? ' | ' : ''}${drink ? `Drink: ${drink}` : ''}`;
+            }
         }
 
         function handleDrinkCategoryClick(e) {
@@ -356,51 +355,42 @@
             if (parentAccordion.style.maxHeight) {
                 parentAccordion.style.maxHeight = parentAccordion.scrollHeight + "px";
             }
+            updateModalSummary();
         }
 
-        function handleAddDrink(e) {
-            const btn = e.target.closest('.add-drink-btn');
+        function handleModifierClick(e) {
+            const btn = e.target.closest('.modifier-btn');
+            if (!btn) return;
+            btn.classList.toggle('selected');
+            updateModalSummary();
+        }
+
+        function handleMixerClick(e) {
+            const btn = e.target.closest('.mixer-btn');
+            if (!btn) return;
+            
+            const parentContainer = btn.closest('.grid');
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+            } else {
+                parentContainer.querySelectorAll('.mixer-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            }
+            updateModalSummary();
+        }
+
+        function handleFoodItemClick(e) {
+            const btn = e.target.closest('.item-btn');
             if (!btn) return;
 
-            const parentAccordion = btn.closest('.accordion-content');
-            const selectedDrinkBtn = parentAccordion.querySelector('.drink-item-btn.selected');
-            if (!selectedDrinkBtn) return;
-
-            let drinkString = selectedDrinkBtn.dataset.item;
-            const modifiers = [];
-            
-            parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
-                modifiers.push(btn.dataset.modifier.charAt(0).toUpperCase() + btn.dataset.modifier.slice(1));
-            });
-            const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
-            if (mixerBtn) {
-                drinkString += ` with ${mixerBtn.dataset.item}`;
+            // Allow deselecting
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+            } else {
+                foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
             }
-
-            if (modifiers.length > 0) {
-                drinkString += ` (${modifiers.join(', ')})`;
-            }
-            
-            renderItemInLiveList({ id: `drink-${Date.now()}`, type: 'drink', name: drinkString });
-        }
-
-        function handleAddFood() {
-            const foodName = foodSelect.value;
-            if (!foodName) return;
-
-            const existingFood = liveOrderList.querySelector('[data-item-id^="food-"]');
-            if (existingFood) existingFood.remove();
-
-            renderItemInLiveList({ id: `food-${Date.now()}`, type: 'food', name: foodName });
-        }
-        
-        function handleRemoveItem(e) {
-            const btn = e.target.closest('.remove-item-btn');
-            if (!btn) return;
-            btn.closest('.live-order-item').remove();
-            if (liveOrderList.children.length === 0) {
-                 liveOrderList.innerHTML = '<p class="text-gray-500 italic">Select items below to add them to the order.</p>';
-            }
+            updateModalSummary();
         }
 
         function createCabinLayout() {
@@ -434,41 +424,38 @@
             } else {
                 modalBackdrop.classList.add('opacity-0');
                 orderModal.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => modalBackdrop.classList.add('hidden'), 300);
+                setTimeout(() => {
+                    modalBackdrop.classList.add('hidden');
+                    document.title = "Flight Order Assistant";
+                }, 300);
             }
         }
 
         function openOrderModal(seatId) {
             orderForm.reset();
-            liveOrderList.innerHTML = '<p class="text-gray-500 italic">Select items below to add them to the order.</p>';
+            foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            drinkAccordionContainer.querySelectorAll('.drink-item-btn').forEach(btn => btn.classList.remove('selected'));
+            drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
             drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
-            
+            updateModalSummary();
+
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
             seatIdInput.value = seatId;
             
             const existingOrder = ordersCache[seatId];
-            if (existingOrder) {
-                if (existingOrder.food) {
-                    renderItemInLiveList({ id: 'food-existing', type: 'food', name: existingOrder.food });
-                }
-                if (existingOrder.drinks && existingOrder.drinks.length > 0) {
-                    existingOrder.drinks.forEach((drink, index) => {
-                         renderItemInLiveList({ id: `drink-existing-${index}`, type: 'drink', name: drink });
-                    });
-                }
+            if (existingOrder && existingOrder.food) {
+                const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
+                if (foodBtn) foodBtn.classList.add('selected');
             }
             
             deleteOrderBtn.classList.toggle('hidden', !existingOrder);
             toggleModal(true);
         }
 
-        function formatDrinksString(drinks) {
-            if (!drinks || drinks.length === 0) return 'None';
-            return drinks.join(', ');
+        function formatDrinksString(order) {
+            return order.drink || 'None';
         }
 
         function updateUIWithOrders() {
@@ -488,7 +475,7 @@
                 const seatEl = document.querySelector(`.seat[data-seat-id="${order.seat}"]`);
                 if (seatEl) seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                 
-                const drinksStr = formatDrinksString(order.drinks);
+                const drinksStr = formatDrinksString(order);
 
                 const orderItem = document.createElement('div');
                 orderItem.className = 'p-3 rounded-lg border border-gray-200 relative';
@@ -501,38 +488,32 @@
                         </span>
                     </div>
                     <p class="text-sm text-gray-600 mt-1"><strong>Food:</strong> ${order.food || 'None'}</p>
-                    <p class="text-sm text-gray-600"><strong>Drinks:</strong> ${drinksStr}</p>
+                    <p class="text-sm text-gray-600"><strong>Drink:</strong> ${drinksStr}</p>
                     ${order.status !== 'delivered' ? `<button data-seat-id="${order.seat}" class="mark-delivered-btn mt-2 text-sm text-blue-600 hover:underline">Mark as Delivered</button>` : ''}
                 `;
                 ordersList.appendChild(orderItem);
             });
         }
 
-        async function handleOrderSave() {
+        async function handleOrderSubmit(e) {
+            e.preventDefault();
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
-            let food = '';
-            const drinks = [];
-            
-            liveOrderList.querySelectorAll('.live-order-item').forEach(itemEl => {
-                const id = itemEl.dataset.itemId;
-                const name = itemEl.querySelector('span').textContent;
-                if (id.startsWith('food-')) {
-                    food = name;
-                } else if (id.startsWith('drink-')) {
-                    drinks.push(name);
-                }
-            });
+            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
+            const food = foodBtn ? foodBtn.dataset.item : '';
 
-            if (!seatId || (!food && drinks.length === 0)) {
+            const summary = summaryText.textContent;
+            const drink = summary.includes('Drink:') ? summary.split('Drink: ')[1].replace(' | ', '') : (summary.includes('Food:') ? '' : summary);
+
+            if (!seatId || (!food && !drink)) {
                 return;
             }
 
             const orderData = {
                 seat: seatId,
                 food: food,
-                drinks: drinks,
+                drink: drink,
                 status: ordersCache[seatId]?.status || 'ordered',
                 updatedBy: userId,
                 updatedAt: new Date().toISOString()
@@ -638,28 +619,29 @@
                     markAsDelivered(deliveredBtn.dataset.seatId);
                 }
             });
-            saveOrderBtn.addEventListener('click', handleOrderSave);
-            addFoodBtn.addEventListener('click', handleAddFood);
-            liveOrderList.addEventListener('click', handleRemoveItem);
-
+            orderForm.addEventListener('submit', handleOrderSubmit);
             [cancelBtn, cancelBtnX, modalBackdrop].forEach(el => el.addEventListener('click', (e) => {
                 if (e.currentTarget === e.target) toggleModal(false);
             }));
             deleteOrderBtn.addEventListener('click', () => requestDeleteOrder(seatIdInput.value));
             clearAllBtn.addEventListener('click', handleClearAll);
+            foodSelectionContainer.addEventListener('click', handleFoodItemClick);
             drinkCategoryContainer.addEventListener('click', handleDrinkCategoryClick);
             
             drinkAccordionContainer.addEventListener('click', (e) => {
-                if (e.target.closest('.drink-item-btn')) {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                if (target.classList.contains('drink-item-btn')) {
                     handleDrinkItemClick(e);
-                } else if (e.target.closest('.modifier-btn')) {
+                } else if (target.classList.contains('modifier-btn')) {
                     handleModifierClick(e);
-                } else if (e.target.closest('.mixer-btn')) {
+                } else if (target.classList.contains('mixer-btn')) {
                     handleMixerClick(e);
-                } else if (e.target.closest('.add-drink-btn')) {
-                    handleAddDrink(e);
                 }
             });
+
+            orderForm.addEventListener('change', updateModalSummary);
             
             // Confirmation Modal Listeners
             confirmActionBtn.addEventListener('click', () => {
