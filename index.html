@@ -153,7 +153,7 @@
                     <button type="button" id="delete-order-btn" class="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 font-medium">Delete Order</button>
                     <div>
                         <button type="button" id="cancel-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 mr-2">Cancel</button>
-                        <button type="submit" form="order-form" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
+                        <button type="button" id="save-order-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
                     </div>
                 </div>
             </div>
@@ -216,6 +216,7 @@
         const drinkAccordionContainer = document.getElementById('drink-accordion-container');
         const summaryText = document.getElementById('summary-text');
         const clearAllBtn = document.getElementById('clear-all-btn');
+        const saveOrderBtn = document.getElementById('save-order-btn');
         // Confirmation Modal Elements
         const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
         const confirmModal = document.getElementById('confirm-modal');
@@ -553,7 +554,7 @@
         }
 
         async function handleOrderSubmit(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
