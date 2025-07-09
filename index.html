@@ -460,7 +460,7 @@
         function updateUIWithOrders() {
             document.querySelectorAll('.seat').forEach(seat => seat.classList.remove('ordered', 'delivered'));
             ordersList.innerHTML = '';
-            const sortedOrders = Object.values(ordersCache).sort((a, b) => a.seat.localeCompare(b.seat, undefined, { numeric: true }));
+            const sortedOrders = Object.entries(ordersCache).sort(([seatA], [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
 
             if (sortedOrders.length === 0) {
                 ordersList.innerHTML = '<p class="text-gray-500 italic">No orders yet.</p>';
@@ -470,8 +470,8 @@
 
             clearAllBtn.disabled = false;
 
-            sortedOrders.forEach(order => {
-                const seatEl = document.querySelector(`.seat[data-seat-id="${order.seat}"]`);
+            sortedOrders.forEach(([seatId, order]) => {
+                const seatEl = document.querySelector(`.seat[data-seat-id="${seatId}"]`);
                 if (seatEl) seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                 
                 const drinksStr = formatDrinksString(order);
@@ -479,16 +479,16 @@
                 const orderItem = document.createElement('div');
                 orderItem.className = 'p-3 rounded-lg border border-gray-200 relative';
                 orderItem.innerHTML = `
-                    <button data-seat-id="${order.seat}" class="clear-order-btn absolute top-1 right-2 text-gray-400 hover:text-red-500 text-lg font-bold leading-none">&times;</button>
+                    <button data-seat-id="${seatId}" class="clear-order-btn absolute top-1 right-2 text-gray-400 hover:text-red-500 text-lg font-bold leading-none">&times;</button>
                     <div class="flex justify-between items-center">
-                        <span class="font-bold text-lg">${order.seat}</span>
+                        <span class="font-bold text-lg">${seatId}</span>
                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${order.status === 'delivered' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'}">
                             ${order.status === 'delivered' ? 'Delivered' : 'Ordered'}
                         </span>
                     </div>
                     <p class="text-sm text-gray-600 mt-1"><strong>Food:</strong> ${order.food || 'None'}</p>
                     <p class="text-sm text-gray-600"><strong>Drink:</strong> ${drinksStr}</p>
-                    ${order.status !== 'delivered' ? `<button data-seat-id="${order.seat}" class="mark-delivered-btn mt-2 text-sm text-blue-600 hover:underline">Mark as Delivered</button>` : ''}
+                    ${order.status !== 'delivered' ? `<button data-seat-id="${seatId}" class="mark-delivered-btn mt-2 text-sm text-blue-600 hover:underline">Mark as Delivered</button>` : ''}
                 `;
                 ordersList.appendChild(orderItem);
             });
