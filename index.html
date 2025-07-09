@@ -383,7 +383,6 @@
             const btn = e.target.closest('.item-btn');
             if (!btn) return;
 
-            // Allow deselecting
             if (btn.classList.contains('selected')) {
                 btn.classList.remove('selected');
             } else {
@@ -500,13 +499,33 @@
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
+            
             const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
             const food = foodBtn ? foodBtn.dataset.item : '';
 
-            const summary = summaryText.textContent;
-            const drink = summary.includes('Drink:') ? summary.split('Drink: ')[1].replace(' | ', '') : (summary.includes('Food:') ? '' : summary);
+            let drink = '';
+            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.item-btn.drink-item-btn.selected');
+            if (selectedDrinkBtn) {
+                let drinkString = selectedDrinkBtn.dataset.item;
+                const modifiers = [];
+                const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
+                
+                parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
+                    modifiers.push(btn.dataset.modifier);
+                });
+                const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
+                if (mixerBtn) {
+                    drinkString += ` with ${mixerBtn.dataset.item}`;
+                }
+
+                if (modifiers.length > 0) {
+                    drinkString += ` (${modifiers.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')})`;
+                }
+                drink = drinkString;
+            }
 
             if (!seatId || (!food && !drink)) {
+                console.log("Save aborted: No items selected.");
                 return;
             }
 
