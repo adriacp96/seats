@@ -232,9 +232,9 @@
             foodSelectionContainer.innerHTML = '';
             Object.entries(FOOD_MENU).forEach(([item, icon]) => {
                 foodSelectionContainer.innerHTML += `
-                    <button type="button" class="item-btn flex flex-col items-center justify-center p-2 border rounded-lg w-24 h-24 hover:border-blue-400" data-item="${item}">
-                        <i class="${icon} text-3xl text-gray-600"></i>
-                        <span class="text-sm mt-2">${item}</span>
+                    <button type="button" class="item-btn flex flex-col items-center justify-center p-2 border rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400" data-item="${item}">
+                        <i class="${icon} text-xl sm:text-2xl text-gray-600"></i>
+                        <span class="text-xs mt-2">${item}</span>
                     </button>`;
             });
 
