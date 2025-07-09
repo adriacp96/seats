@@ -112,7 +112,7 @@
                     <!-- Food Selection -->
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2"><i class="fa-solid fa-utensils mr-2"></i>Food</h3>
-                        <div id="food-selection-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <div id="food-selection-container" class="flex flex-wrap gap-2">
                             <!-- Food buttons will be populated here -->
                         </div>
                     </div>
@@ -166,7 +166,8 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'EK-DEMO';
         
         const FOOD_MENU = {
-            items: ["Chicken", "Beef"]
+            'Chicken': 'fa-solid fa-drumstick-bite',
+            'Beef': 'fa-solid fa-cow'
         };
 
         const DRINK_MENU = {
@@ -229,8 +230,12 @@
         function populateMenus() {
             // Populate Food Menu
             foodSelectionContainer.innerHTML = '';
-            FOOD_MENU.items.forEach(item => {
-                foodSelectionContainer.innerHTML += `<button type="button" class="item-btn p-3 border rounded-lg text-center hover:border-blue-400" data-item="${item}">${item}</button>`;
+            Object.entries(FOOD_MENU).forEach(([item, icon]) => {
+                foodSelectionContainer.innerHTML += `
+                    <button type="button" class="item-btn flex flex-col items-center justify-center p-2 border rounded-lg w-24 h-24 hover:border-blue-400" data-item="${item}">
+                        <i class="${icon} text-3xl text-gray-600"></i>
+                        <span class="text-sm mt-2">${item}</span>
+                    </button>`;
             });
 
             // Populate Drink Menu
