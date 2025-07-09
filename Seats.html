@@ -6,16 +6,13 @@
     <title>Flight Order Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
         .seat {
             transition: all 0.2s ease-in-out;
-        }
-        .seat.selected {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
         }
         .seat.ordered {
             background-color: #10B981; /* green-500 */
@@ -27,11 +24,26 @@
             color: white;
             border-color: #4F46E5; /* indigo-600 */
         }
-        #modal-backdrop {
+        #modal-backdrop, #confirm-modal-backdrop {
             transition: opacity 0.3s ease-in-out;
         }
-        #order-modal {
+        #order-modal, #confirm-modal {
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out;
+        }
+        .category-btn.active {
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+        }
+        .item-btn.selected, .modifier-btn.selected, .mixer-btn.selected {
+            background-color: #ECFDF5; /* green-50 */
+            border-color: #10B981; /* green-500 */
+            color: #065F46; /* green-800 */
+            font-weight: 600;
         }
     </style>
 </head>
@@ -41,9 +53,11 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-700">Flight Order Assistant</h1>
             <p class="text-gray-500 mt-2">Select a seat to take or view an order.</p>
-            <div class="mt-4 text-sm text-gray-600">
-                <p>Flight ID (App): <span id="app-id-display" class="font-mono bg-gray-200 px-2 py-1 rounded"></span></p>
-                <p class="mt-1">Your User ID: <span id="user-id-display" class="font-mono bg-gray-200 px-2 py-1 rounded"></span></p>
+            <div class="mt-4 text-sm text-gray-600 space-y-1">
+                <div class="flex justify-center items-center flex-wrap gap-x-4 gap-y-1">
+                    <p>Flight Number: <span id="app-id-display" class="font-mono bg-gray-200 px-2 py-1 rounded"></span></p>
+                    <p>Staff Number: <span id="user-id-display" class="font-mono bg-gray-200 px-2 py-1 rounded"></span></p>
+                </div>
             </div>
         </header>
 
@@ -65,7 +79,10 @@
 
             <!-- Orders Summary Section -->
             <div id="orders-summary" class="bg-white p-6 rounded-xl shadow-lg">
-                <h2 class="text-xl font-semibold mb-6">Orders Summary</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Orders Summary</h2>
+                    <button id="clear-all-btn" class="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Clear All</button>
+                </div>
                 <div id="orders-list" class="space-y-3 h-96 overflow-y-auto">
                     <p class="text-gray-500 italic">No orders yet.</p>
                 </div>
@@ -74,35 +91,38 @@
     </div>
 
     <!-- Order Modal -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
-        <div id="order-modal" class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 transform scale-95 opacity-0">
-            <h2 class="text-2xl font-bold mb-2">Order for Seat <span id="modal-seat-id" class="text-blue-600"></span></h2>
-            <p class="text-gray-500 mb-6">Select the food and drink or update the order status.</p>
-            <form id="order-form">
+    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
+        <div id="order-modal" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 transform scale-95 opacity-0">
+            <div class="flex justify-between items-start">
+                 <h2 class="text-2xl font-bold mb-4">Order for Seat <span id="modal-seat-id" class="text-blue-600"></span></h2>
+                 <button id="cancel-btn-x" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+           
+            <form id="order-form" class="space-y-6">
                 <input type="hidden" id="seat-id-input">
                 
-                <div class="mb-4">
-                    <label for="food-select" class="block text-sm font-medium text-gray-700 mb-1">Food</label>
-                    <select id="food-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">None</option>
-                        <option value="Chicken">Chicken</option>
-                        <option value="Pasta">Pasta</option>
-                        <option value="Vegetarian">Vegetarian</option>
-                    </select>
+                <!-- Food Selection -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2"><i class="fa-solid fa-utensils mr-2"></i>Food</h3>
+                    <div id="food-selection-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <!-- Food buttons will be populated here -->
+                    </div>
                 </div>
 
-                <div class="mb-6">
-                    <label for="drink-select" class="block text-sm font-medium text-gray-700 mb-1">Drink</label>
-                    <select id="drink-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">None</option>
-                        <option value="Water">Water</option>
-                        <option value="Orange Juice">Orange Juice</option>
-                        <option value="Soda">Soda</option>
-                        <option value="Coffee">Coffee</option>
-                    </select>
+                <!-- Drink Selection -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3"><i class="fa-solid fa-martini-glass mr-2"></i>Drink</h3>
+                    <div id="drink-category-container" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4"></div>
+                    <div id="drink-accordion-container"></div>
                 </div>
 
-                <div class="flex justify-between items-center mt-8">
+                <!-- Order Summary -->
+                <div id="modal-summary" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-gray-700">Current Selection:</h4>
+                    <p id="summary-text" class="text-sm text-gray-600 mt-1 italic">Make a selection...</p>
+                </div>
+
+                <div class="flex justify-between items-center pt-4 border-t">
                     <button type="button" id="delete-order-btn" class="text-red-600 hover:text-red-800 font-medium">Delete Order</button>
                     <div>
                         <button type="button" id="cancel-btn" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mr-2">Cancel</button>
@@ -113,20 +133,44 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-50">
+        <div id="confirm-modal" class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-95 opacity-0">
+            <h3 id="confirm-modal-title" class="text-lg font-bold text-gray-900">Are you sure?</h3>
+            <p id="confirm-modal-text" class="text-sm text-gray-600 mt-2 mb-6">This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-cancel-btn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button id="confirm-action-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURATION ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'demo-flight-456';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'EK-DEMO';
         
+        const FOOD_MENU = {
+            items: ["Chicken", "Pasta"]
+        };
+
+        const DRINK_MENU = {
+            "Soft Drinks": { icon: "fa-solid fa-bottle-water", items: ["Pepsi", "Diet Pepsi", "Seven Up", "Diet Seven Up", "Tonic Water", "Sparkling Water", "Water"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon' } },
+            "Hot Drinks": { icon: "fa-solid fa-mug-hot", items: ["Black Tea", "Green Tea", "Coffee"], modifiers: { 'milk': 'fa-solid fa-fill-drip', 'sugar': 'fa-solid fa-cube' } },
+            "Wines": { icon: "fa-solid fa-wine-glass", items: ["Red Wine", "White Wine", "Sparkling Wine"], modifiers: {} },
+            "Spirits": { icon: "fa-solid fa-whiskey-glass", items: ["Vodka", "Gin", "Cream Liqueur", "Rum", "Cognac", "Cointreau"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon', 'mixer': 'fa-solid fa-blender' } }
+        };
+
         // --- FIREBASE INITIALIZATION ---
         let app, auth, db, userId, ordersCollectionRef;
         let isAuthReady = false;
         let ordersCache = {};
+        let confirmAction = null;
 
         // --- DOM ELEMENTS ---
         const cabinLayout = document.getElementById('cabin-layout').querySelector('div');
@@ -136,66 +180,231 @@
         const modalSeatId = document.getElementById('modal-seat-id');
         const orderForm = document.getElementById('order-form');
         const seatIdInput = document.getElementById('seat-id-input');
-        const foodSelect = document.getElementById('food-select');
-        const drinkSelect = document.getElementById('drink-select');
+        const foodSelectionContainer = document.getElementById('food-selection-container');
         const cancelBtn = document.getElementById('cancel-btn');
+        const cancelBtnX = document.getElementById('cancel-btn-x');
         const deleteOrderBtn = document.getElementById('delete-order-btn');
+        const drinkCategoryContainer = document.getElementById('drink-category-container');
+        const drinkAccordionContainer = document.getElementById('drink-accordion-container');
+        const summaryText = document.getElementById('summary-text');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        // Confirmation Modal Elements
+        const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModalText = document.getElementById('confirm-modal-text');
+        const confirmActionBtn = document.getElementById('confirm-action-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
 
         // --- APPLICATION LOGIC ---
+        
+        function showConfirmModal(text, action) {
+            confirmModalText.textContent = text;
+            confirmAction = action;
+            confirmModalBackdrop.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModalBackdrop.classList.remove('opacity-0');
+                confirmModal.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+        }
 
-        /**
-         * Generates the cabin layout based on the configuration.
-         */
+        function hideConfirmModal() {
+            confirmModalBackdrop.classList.add('opacity-0');
+            confirmModal.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                confirmModalBackdrop.classList.add('hidden');
+                confirmAction = null;
+            }, 300);
+        }
+
+        function populateMenus() {
+            // Populate Food Menu
+            foodSelectionContainer.innerHTML = '';
+            FOOD_MENU.items.forEach(item => {
+                foodSelectionContainer.innerHTML += `<button type="button" class="item-btn p-3 border rounded-lg text-center hover:border-blue-400" data-item="${item}">${item}</button>`;
+            });
+
+            // Populate Drink Menu
+            drinkCategoryContainer.innerHTML = '';
+            drinkAccordionContainer.innerHTML = '';
+
+            Object.entries(DRINK_MENU).forEach(([category, details]) => {
+                const catBtn = document.createElement('button');
+                catBtn.type = 'button';
+                catBtn.className = 'category-btn p-2 border rounded-lg text-sm flex flex-col items-center justify-center space-y-1 hover:bg-gray-100';
+                catBtn.dataset.category = category;
+                catBtn.innerHTML = `<i class="${details.icon} text-xl"></i><span>${category}</span>`;
+                drinkCategoryContainer.appendChild(catBtn);
+
+                const accordion = document.createElement('div');
+                accordion.id = `accordion-${category.replace(/\s+/g, '-')}`;
+                accordion.className = 'accordion-content';
+                accordion.innerHTML = `
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            ${details.items.map(item => `<button type="button" class="item-btn p-2 border rounded-md text-center hover:border-blue-400" data-item="${item}">${item}</button>`).join('')}
+                        </div>
+                        <div class="modifiers-container mt-4"></div>
+                    </div>
+                `;
+                drinkAccordionContainer.appendChild(accordion);
+            });
+        }
+
+        function updateModalSummary() {
+            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
+            const food = foodBtn ? foodBtn.dataset.item : '';
+            
+            let drink = '';
+            const selectedDrinkBtn = drinkAccordionContainer.querySelector('.item-btn.selected');
+            if (selectedDrinkBtn) {
+                let drinkString = selectedDrinkBtn.dataset.item;
+                const modifiers = [];
+                const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
+                
+                parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => {
+                    modifiers.push(btn.dataset.modifier);
+                });
+                const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
+                if (mixerBtn) {
+                    drinkString += ` with ${mixerBtn.dataset.item}`;
+                }
+
+                if (modifiers.length > 0) {
+                    drinkString += ` (${modifiers.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')})`;
+                }
+                drink = drinkString;
+            }
+
+            if (!food && !drink) {
+                summaryText.textContent = 'Make a selection...';
+            } else {
+                summaryText.textContent = `${food ? `Food: ${food}` : ''}${food && drink ? ' | ' : ''}${drink ? `Drink: ${drink}` : ''}`;
+            }
+        }
+
+        function handleDrinkCategoryClick(e) {
+            const btn = e.target.closest('.category-btn');
+            if (!btn) return;
+
+            const category = btn.dataset.category;
+            const targetAccordion = document.getElementById(`accordion-${category.replace(/\s+/g, '-')}`);
+
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.accordion-content').forEach(acc => {
+                if (acc !== targetAccordion) acc.style.maxHeight = null;
+            });
+
+            if (targetAccordion.style.maxHeight) {
+                targetAccordion.style.maxHeight = null;
+                btn.classList.remove('active');
+            } else {
+                targetAccordion.style.maxHeight = targetAccordion.scrollHeight + "px";
+            }
+        }
+
+        function handleDrinkItemClick(e) {
+            const btn = e.target.closest('.item-btn');
+            if (!btn || btn.classList.contains('mixer-btn')) return;
+            
+            const parentAccordion = btn.closest('.accordion-content');
+            const modifiersContainer = parentAccordion.querySelector('.modifiers-container');
+            const category = document.querySelector('.category-btn.active').dataset.category;
+
+            parentAccordion.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+
+            modifiersContainer.innerHTML = '';
+            const modifierTypes = DRINK_MENU[category].modifiers;
+
+            const modifierButtons = document.createElement('div');
+            modifierButtons.className = 'flex flex-wrap gap-2';
+            
+            const mixerContainer = document.createElement('div');
+
+            Object.entries(modifierTypes).forEach(([name, icon]) => {
+                if (name === 'mixer') {
+                    mixerContainer.className = 'w-full mt-4';
+                    mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
+                    const mixerGrid = document.createElement('div');
+                    mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                    DRINK_MENU["Soft Drinks"].items.forEach(drink => {
+                         mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border rounded-md text-center text-sm hover:border-blue-400" data-item="${drink}">${drink}</button>`;
+                    });
+                    mixerContainer.appendChild(mixerGrid);
+                } else {
+                    modifierButtons.innerHTML += `
+                        <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border rounded-lg w-20 h-20 hover:border-blue-400" data-modifier="${name}">
+                            <i class="${icon} text-2xl text-gray-600"></i>
+                            <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                        </button>
+                    `;
+                }
+            });
+            modifiersContainer.appendChild(modifierButtons);
+            if(mixerContainer.innerHTML !== '') {
+                modifiersContainer.appendChild(mixerContainer);
+            }
+            
+            if (parentAccordion.style.maxHeight) {
+                parentAccordion.style.maxHeight = parentAccordion.scrollHeight + "px";
+            }
+
+            updateModalSummary();
+        }
+
+        function handleModifierClick(e) {
+            const btn = e.target.closest('.modifier-btn');
+            if (!btn) return;
+            btn.classList.toggle('selected');
+            updateModalSummary();
+        }
+
+        function handleMixerClick(e) {
+            const btn = e.target.closest('.mixer-btn');
+            if (!btn) return;
+            
+            const parentContainer = btn.closest('.grid');
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+            } else {
+                parentContainer.querySelectorAll('.mixer-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            }
+            updateModalSummary();
+        }
+
+        function handleFoodItemClick(e) {
+            const btn = e.target.closest('.item-btn');
+            if (!btn) return;
+
+            foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            updateModalSummary();
+        }
+
         function createCabinLayout() {
             const rows = [14, 15, 16];
-            const seatConfig = [
-                { seats: ['A', 'B'], aisle: true },
-                { seats: ['D', 'E', 'F'], aisle: true },
-                { seats: ['J', 'K'], aisle: false }
-            ];
-
+            const seatConfig = [ { seats: ['A', 'B'], aisle: true }, { seats: ['D', 'E', 'F'], aisle: true }, { seats: ['J', 'K'], aisle: false }];
             rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
                 rowEl.className = 'flex items-center justify-center space-x-2 w-full';
-
-                const rowLabel = document.createElement('div');
-                rowLabel.className = 'w-8 font-bold text-gray-500 text-lg';
-                rowLabel.textContent = rowNum;
-                rowEl.appendChild(rowLabel);
-
+                rowEl.innerHTML += `<div class="w-8 font-bold text-gray-500 text-lg">${rowNum}</div>`;
                 seatConfig.forEach(group => {
                     const groupEl = document.createElement('div');
                     groupEl.className = 'flex space-x-2';
                     group.seats.forEach(seatLetter => {
-                        const seatId = `${rowNum}${seatLetter}`;
-                        const seatEl = document.createElement('div');
-                        seatEl.className = 'seat w-14 h-14 md:w-16 md:h-16 flex items-center justify-center font-bold text-lg bg-white border-2 border-blue-500 rounded-lg cursor-pointer hover:bg-blue-100';
-                        seatEl.textContent = seatLetter;
-                        seatEl.dataset.seatId = seatId;
-                        groupEl.appendChild(seatEl);
+                        groupEl.innerHTML += `<div class="seat w-14 h-14 md:w-16 md:h-16 flex items-center justify-center font-bold text-lg bg-white border-2 border-blue-500 rounded-lg cursor-pointer hover:bg-blue-100" data-seat-id="${rowNum}${seatLetter}">${seatLetter}</div>`;
                     });
                     rowEl.appendChild(groupEl);
-
-                    if (group.aisle) {
-                        const aisleEl = document.createElement('div');
-                        aisleEl.className = 'w-8 md:w-12';
-                        rowEl.appendChild(aisleEl);
-                    }
+                    if (group.aisle) rowEl.innerHTML += `<div class="w-8 md:w-12"></div>`;
                 });
-                
-                const rowLabelRight = document.createElement('div');
-                rowLabelRight.className = 'w-8 font-bold text-gray-500 text-lg';
-                rowLabelRight.textContent = rowNum;
-                rowEl.appendChild(rowLabelRight);
-
+                rowEl.innerHTML += `<div class="w-8 font-bold text-gray-500 text-lg">${rowNum}</div>`;
                 cabinLayout.appendChild(rowEl);
             });
         }
         
-        /**
-         * Shows or hides the order modal.
-         * @param {boolean} show - True to show, false to hide.
-         */
         function toggleModal(show) {
             if (show) {
                 modalBackdrop.classList.remove('hidden');
@@ -206,88 +415,85 @@
             } else {
                 modalBackdrop.classList.add('opacity-0');
                 orderModal.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => {
-                    modalBackdrop.classList.add('hidden');
-                }, 300);
+                setTimeout(() => modalBackdrop.classList.add('hidden'), 300);
             }
         }
 
-        /**
-         * Opens the modal for a specific seat.
-         * @param {string} seatId - The ID of the seat (e.g., "14A").
-         */
         function openOrderModal(seatId) {
+            orderForm.reset();
+            foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
+            updateModalSummary();
+
             const existingOrder = ordersCache[seatId];
             modalSeatId.textContent = seatId;
             seatIdInput.value = seatId;
             
-            foodSelect.value = existingOrder?.food || '';
-            drinkSelect.value = existingOrder?.drink || '';
-
-            if (existingOrder) {
-                deleteOrderBtn.classList.remove('hidden');
-            } else {
-                deleteOrderBtn.classList.add('hidden');
+            if (existingOrder && existingOrder.food) {
+                const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
+                if (foodBtn) foodBtn.classList.add('selected');
             }
-
+            
+            deleteOrderBtn.classList.toggle('hidden', !existingOrder);
             toggleModal(true);
         }
 
-        /**
-         * Updates the UI (seats and summary list) with order data.
-         */
-        function updateUIWithOrders() {
-            // Reset all seats
-            document.querySelectorAll('.seat').forEach(seat => {
-                seat.classList.remove('ordered', 'delivered');
-            });
+        function formatDrinkString(order) {
+            return order.drink || 'None';
+        }
 
+        function updateUIWithOrders() {
+            document.querySelectorAll('.seat').forEach(seat => seat.classList.remove('ordered', 'delivered'));
             ordersList.innerHTML = '';
             const sortedOrders = Object.values(ordersCache).sort((a, b) => a.seat.localeCompare(b.seat, undefined, { numeric: true }));
 
             if (sortedOrders.length === 0) {
                 ordersList.innerHTML = '<p class="text-gray-500 italic">No orders yet.</p>';
+                clearAllBtn.disabled = true;
                 return;
             }
 
+            clearAllBtn.disabled = false;
+
             sortedOrders.forEach(order => {
                 const seatEl = document.querySelector(`.seat[data-seat-id="${order.seat}"]`);
-                if (seatEl) {
-                    seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
-                }
+                if (seatEl) seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
+                
+                const drinkStr = formatDrinkString(order);
 
                 const orderItem = document.createElement('div');
-                orderItem.className = 'p-3 rounded-lg border border-gray-200';
+                orderItem.className = 'p-3 rounded-lg border border-gray-200 relative'; // Added relative class
                 orderItem.innerHTML = `
+                    <button data-seat-id="${order.seat}" class="clear-order-btn absolute top-1 right-2 text-gray-400 hover:text-red-500 text-lg font-bold leading-none">&times;</button>
                     <div class="flex justify-between items-center">
                         <span class="font-bold text-lg">${order.seat}</span>
                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${order.status === 'delivered' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'}">
                             ${order.status === 'delivered' ? 'Delivered' : 'Ordered'}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-600 mt-1">
-                        ${order.food || 'No food'}, ${order.drink || 'No drink'}
-                    </p>
+                    <p class="text-sm text-gray-600 mt-1"><strong>Food:</strong> ${order.food || 'None'}</p>
+                    <p class="text-sm text-gray-600"><strong>Drink:</strong> ${drinkStr}</p>
                     ${order.status !== 'delivered' ? `<button data-seat-id="${order.seat}" class="mark-delivered-btn mt-2 text-sm text-blue-600 hover:underline">Mark as Delivered</button>` : ''}
                 `;
                 ordersList.appendChild(orderItem);
             });
         }
 
-        /**
-         * Handles the order form submission.
-         * @param {Event} e - The form submission event.
-         */
         async function handleOrderSubmit(e) {
             e.preventDefault();
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
-            const food = foodSelect.value;
-            const drink = drinkSelect.value;
+            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
+            const food = foodBtn ? foodBtn.dataset.item : '';
+
+            const summary = summaryText.textContent;
+            const drink = summary.includes('Drink:') ? summary.split('Drink: ')[1] : '';
 
             if (!seatId || (!food && !drink)) {
-                alert("Please select at least one food or drink item.");
                 return;
             }
 
@@ -295,7 +501,7 @@
                 seat: seatId,
                 food: food,
                 drink: drink,
-                status: ordersCache[seatId]?.status || 'ordered', // Maintain status if it exists
+                status: ordersCache[seatId]?.status || 'ordered',
                 updatedBy: userId,
                 updatedAt: new Date().toISOString()
             };
@@ -305,34 +511,46 @@
                 toggleModal(false);
             } catch (error) {
                 console.error("Error saving order: ", error);
-                alert("There was an error saving the order. Please try again.");
             }
         }
 
-        /**
-         * Handles deleting an order.
-         */
-        async function handleDeleteOrder() {
-            if (!isAuthReady) return;
-            const seatId = seatIdInput.value;
-            if (seatId && confirm(`Are you sure you want to delete the order for seat ${seatId}?`)) {
+        function requestDeleteOrder(seatId) {
+             if (!isAuthReady || !seatId) return;
+            showConfirmModal(`Are you sure you want to delete the order for seat ${seatId}?`, async () => {
                 try {
                     await deleteDoc(doc(ordersCollectionRef, seatId));
-                    toggleModal(false);
+                     if (modalBackdrop.classList.contains('hidden') === false && seatIdInput.value === seatId) {
+                        toggleModal(false);
+                    }
+                    hideConfirmModal();
                 } catch (error) {
                     console.error("Error deleting order: ", error);
-                    alert("There was an error deleting the order.");
+                    hideConfirmModal();
                 }
-            }
+            });
         }
 
-        /**
-         * Marks an order as delivered.
-         * @param {string} seatId - The ID of the seat.
-         */
+        function handleClearAll() {
+            if (!isAuthReady || Object.keys(ordersCache).length === 0) return;
+            
+            showConfirmModal("Are you sure you want to clear ALL orders? This action cannot be undone.", async () => {
+                const batch = writeBatch(db);
+                Object.keys(ordersCache).forEach(seatId => {
+                    const docRef = doc(ordersCollectionRef, seatId);
+                    batch.delete(docRef);
+                });
+
+                try {
+                    await batch.commit();
+                } catch (error) {
+                    console.error("Error clearing all orders: ", error);
+                }
+                hideConfirmModal();
+            });
+        }
+
         async function markAsDelivered(seatId) {
             if (!isAuthReady || !ordersCache[seatId]) return;
-
             const updatedOrder = { ...ordersCache[seatId], status: 'delivered' };
             try {
                 await setDoc(doc(ordersCollectionRef, seatId), updatedOrder);
@@ -341,42 +559,26 @@
             }
         }
 
-
-        // --- INITIALIZATION & EVENT LISTENERS ---
         window.onload = async () => {
             createCabinLayout();
+            populateMenus();
             document.getElementById('app-id-display').textContent = appId;
 
-            // Initialize Firebase
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            setLogLevel('debug');
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userId = user.uid;
-                    document.getElementById('user-id-display').textContent = userId.substring(0, 8) + '...';
+                    document.getElementById('user-id-display').textContent = userId;
                     isAuthReady = true;
-
-                    // Reference to the orders collection
                     ordersCollectionRef = collection(db, `/artifacts/${appId}/public/data/orders`);
-
-                    // Listen for real-time updates
                     onSnapshot(ordersCollectionRef, (snapshot) => {
-                        const newOrders = {};
-                        snapshot.forEach((doc) => {
-                            newOrders[doc.id] = doc.data();
-                        });
-                        ordersCache = newOrders;
+                        ordersCache = {};
+                        snapshot.forEach((doc) => { ordersCache[doc.id] = doc.data(); });
                         updateUIWithOrders();
-                    }, (error) => {
-                        console.error("Error fetching orders:", error);
-                    });
-
-                } else {
-                    isAuthReady = false;
-                    console.log("User not authenticated.");
+                    }, console.error);
                 }
             });
 
@@ -393,27 +595,44 @@
             // Event Listeners
             cabinLayout.addEventListener('click', (e) => {
                 const seat = e.target.closest('.seat');
-                if (seat) {
-                    openOrderModal(seat.dataset.seatId);
-                }
+                if (seat) openOrderModal(seat.dataset.seatId);
             });
-            
             ordersList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('mark-delivered-btn')) {
-                    markAsDelivered(e.target.dataset.seatId);
+                const clearBtn = e.target.closest('.clear-order-btn');
+                const deliveredBtn = e.target.closest('.mark-delivered-btn');
+                if (clearBtn) {
+                    requestDeleteOrder(clearBtn.dataset.seatId);
+                } else if (deliveredBtn) {
+                    markAsDelivered(deliveredBtn.dataset.seatId);
                 }
             });
-
             orderForm.addEventListener('submit', handleOrderSubmit);
-            cancelBtn.addEventListener('click', () => toggleModal(false));
-            modalBackdrop.addEventListener('click', (e) => {
-                if (e.target === modalBackdrop) {
-                    toggleModal(false);
+            [cancelBtn, cancelBtnX, modalBackdrop].forEach(el => el.addEventListener('click', (e) => {
+                if (e.currentTarget === e.target) toggleModal(false);
+            }));
+            deleteOrderBtn.addEventListener('click', () => requestDeleteOrder(seatIdInput.value));
+            clearAllBtn.addEventListener('click', handleClearAll);
+            foodSelectionContainer.addEventListener('click', handleFoodItemClick);
+            drinkCategoryContainer.addEventListener('click', handleDrinkCategoryClick);
+            
+            drinkAccordionContainer.addEventListener('click', (e) => {
+                if (e.target.closest('.item-btn:not(.mixer-btn)')) {
+                    handleDrinkItemClick(e);
+                } else if (e.target.closest('.modifier-btn')) {
+                    handleModifierClick(e);
+                } else if (e.target.closest('.mixer-btn')) {
+                    handleMixerClick(e);
                 }
             });
-            deleteOrderBtn.addEventListener('click', handleDeleteOrder);
-        };
 
+            orderForm.addEventListener('change', updateModalSummary);
+            
+            // Confirmation Modal Listeners
+            confirmActionBtn.addEventListener('click', () => {
+                if(confirmAction) confirmAction();
+            });
+            confirmCancelBtn.addEventListener('click', hideConfirmModal);
+        };
     </script>
 </body>
 </html>
