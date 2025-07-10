@@ -153,7 +153,7 @@
                     <button type="button" id="delete-order-btn" class="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 font-medium">Delete Order</button>
                     <div>
                         <button type="button" id="cancel-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 mr-2">Cancel</button>
-                        <button type="button" id="save-order-btn" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
+                        <button type="submit" form="order-form" class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Order</button>
                     </div>
                 </div>
             </div>
@@ -216,7 +216,6 @@
         const drinkAccordionContainer = document.getElementById('drink-accordion-container');
         const summaryText = document.getElementById('summary-text');
         const clearAllBtn = document.getElementById('clear-all-btn');
-        const saveOrderBtn = document.getElementById('save-order-btn');
         // Confirmation Modal Elements
         const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
         const confirmModal = document.getElementById('confirm-modal');
@@ -339,6 +338,12 @@
             const targetAccordion = document.getElementById(`accordion-${category.replace(/\s+/g, '-')}`);
 
             const isActive = btn.classList.contains('active');
+            
+            // Clear all drink selections when changing category
+            drinkAccordionContainer.querySelectorAll('.item-btn.selected').forEach(b => b.classList.remove('selected'));
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
+            updateModalSummary();
+
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             
@@ -356,39 +361,45 @@
             const modifiersContainer = parentAccordion.querySelector('.modifiers-container');
             const category = document.querySelector('.category-btn.active').dataset.category;
 
-            parentAccordion.querySelectorAll('.drink-item-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
+            // Toggle selection
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+                modifiersContainer.innerHTML = '';
+            } else {
+                parentAccordion.querySelectorAll('.drink-item-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
 
-            modifiersContainer.innerHTML = '';
-            const modifierTypes = DRINK_MENU[category].modifiers;
+                modifiersContainer.innerHTML = '';
+                const modifierTypes = DRINK_MENU[category].modifiers;
 
-            const modifierButtons = document.createElement('div');
-            modifierButtons.className = 'flex flex-wrap gap-2';
-            
-            const mixerContainer = document.createElement('div');
+                const modifierButtons = document.createElement('div');
+                modifierButtons.className = 'flex flex-wrap gap-2';
+                
+                const mixerContainer = document.createElement('div');
 
-            Object.entries(modifierTypes).forEach(([name, icon]) => {
-                if (name === 'mixer') {
-                    mixerContainer.className = 'w-full mt-4';
-                    mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
-                    const mixerGrid = document.createElement('div');
-                    mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
-                    DRINK_MENU["Soft Drinks"].items.forEach(drink => {
-                         mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
-                    });
-                    mixerContainer.appendChild(mixerGrid);
-                } else {
-                    modifierButtons.innerHTML += `
-                        <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-modifier="${name}">
-                            <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
-                            <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
-                        </button>
-                    `;
+                Object.entries(modifierTypes).forEach(([name, icon]) => {
+                    if (name === 'mixer') {
+                        mixerContainer.className = 'w-full mt-4';
+                        mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
+                        const mixerGrid = document.createElement('div');
+                        mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                        DRINK_MENU["Soft Drinks"].items.forEach(drink => {
+                            mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                        });
+                        mixerContainer.appendChild(mixerGrid);
+                    } else {
+                        modifierButtons.innerHTML += `
+                            <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-modifier="${name}">
+                                <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
+                                <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                            </button>
+                        `;
+                    }
+                });
+                modifiersContainer.appendChild(modifierButtons);
+                if(mixerContainer.innerHTML !== '') {
+                    modifiersContainer.appendChild(mixerContainer);
                 }
-            });
-            modifiersContainer.appendChild(modifierButtons);
-            if(mixerContainer.innerHTML !== '') {
-                modifiersContainer.appendChild(mixerContainer);
             }
             
             if (parentAccordion.style.maxHeight) {
@@ -432,8 +443,8 @@
         }
 
         function createCabinLayout() {
-            const rows = [14, 15, 16];
-            const seatConfig = [ { seats: ['A', 'B'], aisle: true }, { seats: ['D', 'E', 'F'], aisle: true }, { seats: ['J', 'K'], aisle: false }];
+            const rows = [16, 15, 14];
+            const seatConfig = [ { seats: ['K', 'J'], aisle: true }, { seats: ['F', 'E', 'D'], aisle: true }, { seats: ['B', 'A'], aisle: false } ];
             cabinLayout.innerHTML = ''; // Clear previous layout
             rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
@@ -553,7 +564,8 @@
             });
         }
 
-        async function handleOrderSubmit() {
+        async function handleOrderSubmit(e) {
+            e.preventDefault();
             if (!isAuthReady) return;
 
             const seatId = seatIdInput.value;
@@ -703,8 +715,7 @@
                 }
             });
             
-            const saveOrderBtn = document.getElementById('save-order-btn');
-            saveOrderBtn.addEventListener('click', handleOrderSubmit);
+            orderForm.addEventListener('submit', handleOrderSubmit);
 
             [cancelBtn, cancelBtnX, modalBackdrop].forEach(el => el.addEventListener('click', (e) => {
                 if (e.currentTarget === e.target) toggleModal(false);
