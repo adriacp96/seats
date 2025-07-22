@@ -123,7 +123,7 @@
             </div>
            
             <div class="flex-grow overflow-y-auto p-4 sm:p-6">
-                <div id="order-form" class="space-y-6">
+                <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
                     
                     <!-- Food Selection -->
@@ -139,8 +139,8 @@
                         <h3 class="text-lg font-semibold mb-3"><i class="fa-solid fa-martini-glass mr-2"></i>Drink</h3>
                         <div id="drink-category-container" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4"></div>
                         <div id="drink-accordion-container"></div>
-                    </div>
-                </div>
+                    </div >
+                </form>
             </div>
 
             <div class="flex-shrink-0 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
@@ -403,6 +403,7 @@
 
             const isActive = btn.classList.contains('active');
             
+            // Clear previous selections in drinks and modifiers when changing category
             drinkAccordionContainer.querySelectorAll('.item-btn.selected').forEach(b => b.classList.remove('selected'));
             drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
             updateModalSummary();
@@ -446,6 +447,7 @@
                         mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
                         const mixerGrid = document.createElement('div');
                         mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                        // Populate mixers with Soft Drinks items
                         DRINK_MENU["Soft Drinks"].items.forEach(drink => {
                             mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
                         });
@@ -465,6 +467,7 @@
                 }
             }
             
+            // Adjust accordion height
             if (parentAccordion.style.maxHeight) {
                 parentAccordion.style.maxHeight = parentAccordion.scrollHeight + "px";
             }
@@ -484,7 +487,7 @@
             const btn = e.target.closest('.mixer-btn');
             if (!btn) return;
             
-            const parentContainer = btn.closest('.grid');
+            const parentContainer = btn.closest('.grid'); // Get the grid containing mixer buttons
             if (btn.classList.contains('selected')) {
                 btn.classList.remove('selected');
             } else {
@@ -568,6 +571,7 @@
         }
 
         function openOrderModal(seatId) {
+            // Reset modal state
             orderForm.reset();
             foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
@@ -581,12 +585,88 @@
             seatIdInput.value = seatId;
             
             const existingOrder = ordersCache[seatId];
-            if (existingOrder && existingOrder.food) {
-                const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
-                if (foodBtn) foodBtn.classList.add('selected');
+            if (existingOrder) {
+                // Pre-fill food selection
+                if (existingOrder.food) {
+                    const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
+                    if (foodBtn) foodBtn.classList.add('selected');
+                }
+
+                // Pre-fill drink selection
+                if (existingOrder.drink) {
+                    // This part is complex due to modifiers and mixers.
+                    // For simplicity, we'll just try to select the main drink item.
+                    // A more robust solution would parse the drink string to re-select modifiers/mixers.
+                    let drinkName = existingOrder.drink.split('(')[0].trim(); // Get base drink name
+                    let categoryFound = false;
+                    for (const [category, details] of Object.entries(DRINK_MENU)) {
+                        if (details.items.includes(drinkName)) {
+                            // Activate category
+                            const catBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+                            if (catBtn) {
+                                catBtn.classList.add('active');
+                                const targetAccordion = document.getElementById(`accordion-${category.replace(/\s+/g, '-')}`);
+                                targetAccordion.style.maxHeight = targetAccordion.scrollHeight + "px"; // Open accordion
+                            }
+                            // Select drink item
+                            const drinkBtn = document.querySelector(`#accordion-${category.replace(/\s+/g, '-')} .drink-item-btn[data-item="${drinkName}"]`);
+                            if (drinkBtn) {
+                                drinkBtn.classList.add('selected');
+                                // Manually trigger modifier/mixer population if needed (simplified)
+                                const modifiersContainer = drinkBtn.closest('.accordion-content').querySelector('.modifiers-container');
+                                modifiersContainer.innerHTML = ''; // Clear existing
+                                const modifierTypes = DRINK_MENU[category].modifiers;
+                                const modifierButtons = document.createElement('div');
+                                modifierButtons.className = 'flex flex-wrap gap-2';
+                                const mixerContainer = document.createElement('div');
+
+                                Object.entries(modifierTypes).forEach(([name, icon]) => {
+                                    if (name === 'mixer') {
+                                        mixerContainer.className = 'w-full mt-4';
+                                        mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
+                                        const mixerGrid = document.createElement('div');
+                                        mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                                        DRINK_MENU["Soft Drinks"].items.forEach(drink => {
+                                            mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                                        });
+                                        mixerContainer.appendChild(mixerGrid);
+                                    } else {
+                                        modifierButtons.innerHTML += `
+                                            <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-modifier="${name}">
+                                                <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
+                                                <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                                            </button>
+                                        `;
+                                    }
+                                });
+                                modifiersContainer.appendChild(modifierButtons);
+                                if(mixerContainer.innerHTML !== '') {
+                                    modifiersContainer.appendChild(mixerContainer);
+                                }
+
+                                // Re-select modifiers and mixer if present in existingOrder.drink string
+                                if (existingOrder.drink.includes('(') && existingOrder.drink.includes(')')) {
+                                    const modifiersPart = existingOrder.drink.substring(existingOrder.drink.indexOf('(') + 1, existingOrder.drink.indexOf(')'));
+                                    modifiersPart.split(',').map(m => m.trim().toLowerCase()).forEach(mod => {
+                                        const modBtn = modifiersContainer.querySelector(`.modifier-btn[data-modifier="${mod}"]`);
+                                        if (modBtn) modBtn.classList.add('selected');
+                                    });
+                                }
+                                if (existingOrder.drink.includes(' with ')) {
+                                    const mixerPart = existingOrder.drink.split(' with ')[1].split('(')[0].trim();
+                                    const mixerBtn = modifiersContainer.querySelector(`.mixer-btn[data-item="${mixerPart}"]`);
+                                    if (mixerBtn) mixerBtn.classList.add('selected');
+                                }
+                            }
+                            categoryFound = true;
+                            break;
+                        }
+                    }
+                }
             }
             
             deleteOrderBtn.classList.toggle('hidden', !existingOrder);
+            updateModalSummary(); // Update summary after pre-filling
             toggleModal(true);
         }
 
@@ -616,144 +696,186 @@
                 const orderItem = document.createElement('div');
                 orderItem.className = 'p-3 rounded-lg border border-gray-200 dark:border-gray-700 relative';
                 orderItem.innerHTML = `
-                    <button data-seat-id="${seatId}" class="clear-order-btn absolute top-1 right-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 text-lg font-bold leading-none">&times;</button>
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-lg">${seatId}</span>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${order.status === 'delivered' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300' : 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'}">
-                            ${order.status === 'delivered' ? 'Delivered' : 'Ordered'}
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-lg text-gray-700 dark:text-gray-200">Seat ${seatId}</h3>
+                        <span class="text-sm font-medium px-2 py-1 rounded-full ${order.status === 'ordered' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'}">
+                            ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1"><strong>Food:</strong> ${order.food || 'None'}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-300"><strong>Drink:</strong> ${drinksStr}</p>
-                    ${order.status !== 'delivered' ? `<button data-seat-id="${seatId}" class="mark-delivered-btn mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">Mark as Delivered</button>` : ''}
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Food: <span class="font-medium">${order.food || 'None'}</span></p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Drink: <span class="font-medium">${drinksStr}</span></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Last updated by ${order.updatedBy} at ${new Date(order.updatedAt).toLocaleTimeString()}</p>
+                    <div class="absolute top-2 right-2 flex space-x-1">
+                        <button data-seat-id="${seatId}" data-status="${order.status}" class="toggle-status-btn p-1 rounded-full text-white ${order.status === 'ordered' ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-green-500 hover:bg-green-600'}" title="${order.status === 'ordered' ? 'Mark as Delivered' : 'Mark as Ordered'}">
+                            <i class="fas ${order.status === 'ordered' ? 'fa-check' : 'fa-undo'} text-xs"></i>
+                        </button>
+                        <button data-seat-id="${seatId}" class="edit-order-btn p-1 rounded-full bg-blue-500 text-white hover:bg-blue-600" title="Edit Order">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                    </div>
                 `;
                 ordersList.appendChild(orderItem);
             });
         }
 
-        function requestDeleteOrder(seatId) {
-             if (!isAuthReady || !seatId) return;
-            showConfirmModal(`Are you sure you want to delete the order for seat ${seatId}?`, async () => {
-                try {
-                    await deleteDoc(doc(ordersCollectionRef, seatId));
-                     if (modalBackdrop.classList.contains('hidden') === false && seatIdInput.value === seatId) {
-                        toggleModal(false);
-                    }
-                    hideConfirmModal();
-                } catch (error) {
-                    console.error("Error deleting order: ", error);
-                    hideConfirmModal();
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDarkMode();
+            populateMenus();
+            createCabinLayout(); // Generate the seat layout
+
+            // Initialize Firebase
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Authenticate user anonymously or with custom token
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken)
+                    .then(() => console.log("Signed in with custom token."))
+                    .catch((error) => console.error("Error signing in with custom token:", error));
+            } else {
+                signInAnonymously(auth)
+                    .then(() => console.log("Signed in anonymously."))
+                    .catch((error) => console.error("Error signing in anonymously:", error));
+            }
+
+            // Listen for authentication state changes
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    document.getElementById('user-id-display').textContent = userId;
+                    document.getElementById('app-id-display').textContent = appId;
+                    ordersCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/orders`);
+                    
+                    // Set up real-time listener for orders
+                    onSnapshot(ordersCollectionRef, (snapshot) => {
+                        ordersCache = {};
+                        snapshot.forEach(doc => {
+                            ordersCache[doc.id] = doc.data();
+                        });
+                        updateUIWithOrders();
+                    }, (error) => {
+                        console.error("Error fetching real-time orders: ", error);
+                    });
+                } else {
+                    console.log("No user signed in.");
+                    isAuthReady = false;
+                    document.getElementById('user-id-display').textContent = 'N/A';
+                    document.getElementById('app-id-display').textContent = appId;
+                    ordersCache = {};
+                    updateUIWithOrders();
                 }
             });
-        }
 
-        function handleClearAll() {
-            if (!isAuthReady || Object.keys(ordersCache).length === 0) return;
-            
-            showConfirmModal("Are you sure you want to clear ALL orders? This action cannot be undone.", async () => {
-                const batch = writeBatch(db);
-                Object.keys(ordersCache).forEach(seatId => {
-                    const docRef = doc(ordersCollectionRef, seatId);
-                    batch.delete(docRef);
-                });
+            // Event delegation for seat clicks
+            cabinLayout.addEventListener('click', (e) => {
+                const seatEl = e.target.closest('.seat');
+                if (seatEl) {
+                    const seatId = seatEl.dataset.seatId;
+                    openOrderModal(seatId);
+                }
+            });
 
-                try {
-                    await batch.commit();
-                } catch (error) {
-                    console.error("Error clearing all orders: ", error);
+            // Modal close buttons
+            cancelBtnX.addEventListener('click', () => toggleModal(false));
+            closeBtn.addEventListener('click', () => toggleModal(false));
+
+            // Delete Order button in modal
+            deleteOrderBtn.addEventListener('click', () => {
+                const seatIdToDelete = seatIdInput.value;
+                if (seatIdToDelete) {
+                    showConfirmModal(`Are you sure you want to delete the order for seat ${seatIdToDelete}?`, async () => {
+                        try {
+                            await deleteDoc(doc(ordersCollectionRef, seatIdToDelete));
+                            toggleModal(false); // Close modal after deletion
+                        } catch (error) {
+                            console.error("Error deleting order: ", error);
+                        }
+                    });
+                }
+            });
+
+            // Confirmation modal buttons
+            confirmActionBtn.addEventListener('click', () => {
+                if (confirmAction) {
+                    confirmAction();
                 }
                 hideConfirmModal();
             });
-        }
 
-        async function markAsDelivered(seatId) {
-            if (!isAuthReady || !ordersCache[seatId]) return;
-            const updatedOrder = { ...ordersCache[seatId], status: 'delivered' };
-            try {
-                await setDoc(doc(ordersCollectionRef, seatId), updatedOrder);
-            } catch (error) {
-                console.error("Error marking as delivered: ", error);
-            }
-        }
-
-        window.onload = async () => {
-            setupDarkMode();
-            createCabinLayout();
-            populateMenus();
-            document.getElementById('app-id-display').textContent = appId;
-
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    document.getElementById('user-id-display').textContent = userId;
-                    isAuthReady = true;
-                    ordersCollectionRef = collection(db, `/artifacts/${appId}/public/data/orders`);
-                    onSnapshot(ordersCollectionRef, (snapshot) => {
-                        ordersCache = {};
-                        snapshot.forEach((doc) => { ordersCache[doc.id] = doc.data(); });
-                        updateUIWithOrders();
-                    }, console.error);
-                }
+            confirmCancelBtn.addEventListener('click', () => {
+                hideConfirmModal();
             });
 
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Authentication error:", error);
-            }
-
-            // Event Listeners
-            cabinLayout.addEventListener('click', (e) => {
-                const seat = e.target.closest('.seat');
-                if (seat) openOrderModal(seat.dataset.seatId);
-            });
-            ordersList.addEventListener('click', (e) => {
-                const clearBtn = e.target.closest('.clear-order-btn');
-                const deliveredBtn = e.target.closest('.mark-delivered-btn');
-                if (clearBtn) {
-                    requestDeleteOrder(clearBtn.dataset.seatId);
-                } else if (deliveredBtn) {
-                    markAsDelivered(deliveredBtn.dataset.seatId);
-                }
-            });
-            
-            closeBtn.addEventListener('click', () => toggleModal(false));
-
-            [cancelBtnX, modalBackdrop].forEach(el => el.addEventListener('click', (e) => {
-                if (e.currentTarget === e.target) toggleModal(false);
-            }));
-            deleteOrderBtn.addEventListener('click', () => requestDeleteOrder(seatIdInput.value));
-            clearAllBtn.addEventListener('click', handleClearAll);
+            // Event delegation for food selection
             foodSelectionContainer.addEventListener('click', handleFoodItemClick);
-            drinkCategoryContainer.addEventListener('click', handleDrinkCategoryClick);
-            
-            drinkAccordionContainer.addEventListener('click', (e) => {
-                const target = e.target.closest('button');
-                if (!target) return;
 
-                if (target.classList.contains('drink-item-btn')) {
+            // Event delegation for drink category buttons
+            drinkCategoryContainer.addEventListener('click', handleDrinkCategoryClick);
+
+            // Event delegation for drink item buttons (inside accordions)
+            drinkAccordionContainer.addEventListener('click', (e) => {
+                const drinkItemBtn = e.target.closest('.drink-item-btn');
+                if (drinkItemBtn) {
                     handleDrinkItemClick(e);
-                } else if (target.classList.contains('modifier-btn')) {
-                    handleModifierClick(e);
-                } else if (target.classList.contains('mixer-btn')) {
-                    handleMixerClick(e);
+                } else {
+                    const modifierBtn = e.target.closest('.modifier-btn');
+                    if (modifierBtn) {
+                        handleModifierClick(e);
+                    } else {
+                        const mixerBtn = e.target.closest('.mixer-btn');
+                        if (mixerBtn) {
+                            handleMixerClick(e);
+                        }
+                    }
                 }
             });
-            
-            // Confirmation Modal Listeners
-            confirmActionBtn.addEventListener('click', () => {
-                if(confirmAction) confirmAction();
+
+            // Clear All button
+            clearAllBtn.addEventListener('click', () => {
+                showConfirmModal("Are you sure you want to clear all orders? This cannot be undone.", async () => {
+                    if (!isAuthReady) {
+                        console.error("Firestore not ready for clear all.");
+                        return;
+                    }
+                    const batch = writeBatch(db);
+                    for (const seatId in ordersCache) {
+                        batch.delete(doc(ordersCollectionRef, seatId));
+                    }
+                    try {
+                        await batch.commit();
+                        console.log("All orders cleared.");
+                    } catch (error) {
+                        console.error("Error clearing all orders: ", error);
+                    }
+                });
             });
-            confirmCancelBtn.addEventListener('click', hideConfirmModal);
-        };
+
+            // Event delegation for toggle status and edit buttons in orders summary
+            ordersList.addEventListener('click', async (e) => {
+                const toggleStatusBtn = e.target.closest('.toggle-status-btn');
+                const editOrderBtn = e.target.closest('.edit-order-btn');
+
+                if (toggleStatusBtn) {
+                    const seatId = toggleStatusBtn.dataset.seatId;
+                    const currentStatus = toggleStatusBtn.dataset.status;
+                    const newStatus = currentStatus === 'ordered' ? 'delivered' : 'ordered';
+                    if (ordersCache[seatId]) {
+                        try {
+                            await setDoc(doc(ordersCollectionRef, seatId), { status: newStatus, updatedBy: userId, updatedAt: new Date().toISOString() }, { merge: true });
+                        } catch (error) {
+                            console.error("Error updating order status: ", error);
+                        }
+                    }
+                } else if (editOrderBtn) {
+                    const seatId = editOrderBtn.dataset.seatId;
+                    openOrderModal(seatId);
+                }
+            });
+        });
     </script>
 </body>
 </html>
