@@ -190,7 +190,7 @@
         const orderModalTitle = document.getElementById('order-modal-title');
         const orderForm = document.getElementById('order-form');
         const seatIdInput = document.getElementById('seat-id-input');
-        const customerNameInput = document.getElementById('customer-name-input'); // New element
+        const customerNameInput = document.getElementById('customer-name-input');
         const foodSelectionContainer = document.getElementById('food-selection-container');
         const cancelBtnX = document.getElementById('cancel-btn-x');
         const deleteOrderBtn = document.getElementById('delete-order-btn');
@@ -434,7 +434,74 @@
                     const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
                     if (foodBtn) foodBtn.classList.add('selected');
                 }
-                // (Logic for populating drink selection remains the same)
+                
+                if (existingOrder.drink) {
+                    let drinkName = existingOrder.drink.split('(')[0].trim();
+                    let drinkParts = drinkName.split(' with ');
+                    drinkName = drinkParts[0];
+
+                    for (const [category, details] of Object.entries(DRINK_MENU)) {
+                        if (details.items.includes(drinkName)) {
+                            const catBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+                            if (catBtn) {
+                                catBtn.classList.add('active');
+                                const targetAccordion = document.getElementById(`accordion-${category.replace(/\s+/g, '-')}`);
+                                targetAccordion.style.maxHeight = targetAccordion.scrollHeight + "px";
+                            }
+                            const drinkBtn = document.querySelector(`#accordion-${category.replace(/\s+/g, '-')} .drink-item-btn[data-item="${drinkName}"]`);
+                            if (drinkBtn) {
+                                drinkBtn.classList.add('selected');
+                                const modifiersContainer = drinkBtn.closest('.accordion-content').querySelector('.modifiers-container');
+                                
+                                modifiersContainer.innerHTML = '';
+                                const modifierTypes = DRINK_MENU[category].modifiers;
+
+                                const modifierButtons = document.createElement('div');
+                                modifierButtons.className = 'flex flex-wrap gap-2';
+                                
+                                const mixerContainer = document.createElement('div');
+
+                                Object.entries(modifierTypes).forEach(([name, icon]) => {
+                                    if (name === 'mixer') {
+                                        mixerContainer.className = 'w-full mt-4';
+                                        mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
+                                        const mixerGrid = document.createElement('div');
+                                        mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                                        DRINK_MENU["Soft Drinks"].items.forEach(drink => {
+                                            mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                                        });
+                                        mixerContainer.appendChild(mixerGrid);
+                                    } else {
+                                        modifierButtons.innerHTML += `
+                                            <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-modifier="${name}">
+                                                <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
+                                                <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                                            </button>
+                                        `;
+                                    }
+                                });
+                                modifiersContainer.appendChild(modifierButtons);
+                                if(mixerContainer.innerHTML !== '') {
+                                    modifiersContainer.appendChild(mixerContainer);
+                                }
+
+                                if (existingOrder.drink.includes('(') && existingOrder.drink.includes(')')) {
+                                    const modifiersPart = existingOrder.drink.substring(existingOrder.drink.indexOf('(') + 1, existingOrder.drink.indexOf(')'));
+                                    modifiersPart.split(',').map(m => m.trim().toLowerCase()).forEach(mod => {
+                                        const modBtn = modifiersContainer.querySelector(`.modifier-btn[data-modifier="${mod}"]`);
+                                        if (modBtn) modBtn.classList.add('selected');
+                                    });
+                                }
+                                if (drinkParts.length > 1) {
+                                    const mixerPart = drinkParts[1];
+                                    const mixerBtn = modifiersContainer.querySelector(`.mixer-btn[data-item="${mixerPart}"]`);
+                                    if (mixerBtn) mixerBtn.classList.add('selected');
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
             }
             
             deleteOrderBtn.classList.toggle('hidden', !existingOrder);
@@ -465,8 +532,8 @@
                 if (seatEl) {
                     seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                     if (order.customerName) {
-                        // Display customer name on the seat, truncated if too long
-                        seatEl.innerHTML = `<div class="text-xs font-normal truncate p-1" title="${order.customerName}">${order.customerName}</div>`;
+                        // Display customer name on the seat, with smaller text and truncation to fit
+                        seatEl.innerHTML = `<div class="text-[10px] leading-tight font-semibold truncate p-0.5" title="${order.customerName}">${order.customerName}</div>`;
                     }
                 }
                 
@@ -583,7 +650,6 @@
                 }
             });
 
-            // Functions that require event handlers (unchanged from original but included for completeness)
             function handleDrinkCategoryClick(e) {
                 const btn = e.target.closest('.category-btn');
                 if (!btn) return;
@@ -615,7 +681,34 @@
                     btn.classList.add('selected');
                     modifiersContainer.innerHTML = '';
                     const modifierTypes = DRINK_MENU[category].modifiers;
-                    // (Modifier and mixer logic remains the same)
+                    
+                    const modifierButtons = document.createElement('div');
+                    modifierButtons.className = 'flex flex-wrap gap-2';
+                    const mixerContainer = document.createElement('div');
+
+                    Object.entries(modifierTypes).forEach(([name, icon]) => {
+                        if (name === 'mixer') {
+                            mixerContainer.className = 'w-full mt-4';
+                            mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
+                            const mixerGrid = document.createElement('div');
+                            mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                            DRINK_MENU["Soft Drinks"].items.forEach(drink => {
+                                mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                            });
+                            mixerContainer.appendChild(mixerGrid);
+                        } else {
+                            modifierButtons.innerHTML += `
+                                <button type="button" class="modifier-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-modifier="${name}">
+                                    <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
+                                    <span class="text-xs mt-2">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                                </button>
+                            `;
+                        }
+                    });
+                    modifiersContainer.appendChild(modifierButtons);
+                    if(mixerContainer.innerHTML !== '') {
+                        modifiersContainer.appendChild(mixerContainer);
+                    }
                 }
                 if (parentAccordion.style.maxHeight) parentAccordion.style.maxHeight = parentAccordion.scrollHeight + "px";
                 updateModalSummary();
