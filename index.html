@@ -451,8 +451,8 @@
 
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
-                    // Make each group a flex container that will wrap its fixed-size children
-                    groupEl.className = 'flex space-x-1 sm:space-x-2'; // Removed flex-1 here
+                    // Make each group a flex container that grows to distribute space
+                    groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
                         // Use fixed width and height for seats to ensure consistent size across all layouts.
@@ -501,7 +501,7 @@
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
-            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '';
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
             
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600 dark:text-blue-400">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
