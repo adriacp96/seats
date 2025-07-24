@@ -470,8 +470,7 @@
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
                         // Apply the specific width and height classes, and ensure no flex growing/shrinking
-                        // Removed flex-grow-0 and flex-shrink-0 to allow true flexing for horizontal fit
-                        seatEl.className = `seat flex-1 aspect-square min-w-[18px] max-w-[40px] font-bold ${seatSize.textSizeClass} bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`; 
+                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
