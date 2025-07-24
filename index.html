@@ -93,11 +93,13 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
 
     <div id="app-container" class="container mx-auto p-2 sm:p-4 md:p-8 flex-1 flex flex-col">
+        <!-- Aircraft Selection Toggle -->
         <div class="flex justify-center space-x-2 mb-2 mt-4">
             <button id="a350-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Airbus A350</button>
             <button id="b777-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Boeing 777-300</button>
         </div>
 
+        <!-- Class Selection Toggle (for A350 only) -->
         <div id="class-selection-container" class="flex justify-center space-x-2 mb-4">
             <button id="premium-economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Premium Economy</button>
             <button id="economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Economy</button>
@@ -110,6 +112,7 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
+            <!-- Cabin Layout: Changed overflow-x-auto to overflow-x-hidden -->
             <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-hidden overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
@@ -138,6 +141,7 @@
                 <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
                     
+                    <!-- Customer Name Input -->
                     <div>
                         <label for="customer-name-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><i class="fa-solid fa-user mr-2"></i>Customer Name</label>
                         <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
@@ -321,8 +325,8 @@
                 drinkAccordionContainer.innerHTML += `
                     <div id="accordion-${category.replace(/\s+/g, '-')}" class="accordion-content">
                         <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                ${details.items.map(item => `<button type="button" class="item-btn drink-item-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center hover:border-blue-400 dark:hover:border-blue-500" data-item="${item}">${item}</button>`).join('')}
+                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                ${details.items.map(item => `<button type="button" class="item-btn drink-item-btn border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 flex flex-col items-center justify-center text-center w-16 h-16 sm:w-20 sm:h-20" data-item="${item}"><span class="text-xs p-1">${item}</span></button>`).join('')}
                             </div>
                             <div class="modifiers-container mt-4"></div>
                         </div>
@@ -603,9 +607,9 @@
                                         mixerContainer.className = 'w-full mt-4';
                                         mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
                                         const mixerGrid = document.createElement('div');
-                                        mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                                        mixerGrid.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
                                         DRINK_MENU["Soft Drinks"].items.forEach(drink => {
-                                            mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                                            mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 flex flex-col items-center justify-center text-center w-16 h-16 sm:w-20 sm:h-20" data-item="${drink}"><span class="text-xs p-1">${drink}</span></button>`;
                                         });
                                         mixerContainer.appendChild(mixerGrid);
                                     } else {
@@ -856,9 +860,9 @@
                             mixerContainer.className = 'w-full mt-4';
                             mixerContainer.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="${icon} mr-2"></i>Mixer</h4>`;
                             const mixerGrid = document.createElement('div');
-                            mixerGrid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+                            mixerGrid.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
                             DRINK_MENU["Soft Drinks"].items.forEach(drink => {
-                                mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn p-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-xs sm:text-sm hover:border-blue-400 dark:hover:border-blue-500" data-item="${drink}">${drink}</button>`;
+                                mixerGrid.innerHTML += `<button type="button" class="item-btn mixer-btn border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 flex flex-col items-center justify-center text-center w-16 h-16 sm:w-20 sm:h-20" data-item="${drink}"><span class="text-xs p-1">${drink}</span></button>`;
                             });
                             mixerContainer.appendChild(mixerGrid);
                         } else {
