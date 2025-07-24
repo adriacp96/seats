@@ -112,7 +112,8 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-auto overflow-y-auto max-h-[33vh]">
+            <!-- Cabin Layout: Changed overflow-x-auto to overflow-x-hidden -->
+            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-hidden overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
             </div>
@@ -230,17 +231,6 @@
                         { seats: ['C', 'B', 'A'], aisle: false } // C, B, A from left to right (3 seats)
                     ]
                 }
-            }
-        };
-
-        // Define specific seat sizing classes for each configuration
-        const SEAT_SIZES_BY_CONFIG = {
-            a350: {
-                premiumEconomy: { widthClass: 'w-12 h-12', textSizeClass: 'text-sm sm:text-base' }, // Larger seats for fewer across
-                economy: { widthClass: 'w-9 h-9', textSizeClass: 'text-[10px] sm:text-xs' } // Smaller for more across
-            },
-            b777: {
-                economy: { widthClass: 'w-8 h-8', textSizeClass: 'text-[8px] sm:text-[10px]' } // Smallest for 10 across
             }
         };
 
@@ -447,44 +437,103 @@
 
         function createCabinLayout(aircraftType, classType) {
             const config = AIRCRAFT_CONFIGS[aircraftType][classType];
-            const seatSize = SEAT_SIZES_BY_CONFIG[aircraftType][classType]; // Get the specific size for this config
+            const cabinLayoutContainer = document.getElementById('cabin-layout');
+            const layoutInnerDiv = cabinLayoutContainer.querySelector('div');
 
-            cabinLayout.innerHTML = ''; // Clear existing layout
-            config.rows.forEach(rowNum => {
-                const rowEl = document.createElement('div');
-                // Removed justify-between and w-full, will handle container sizing
-                rowEl.className = 'flex items-center justify-center gap-x-1 sm:gap-x-2'; // Center alignment for row content
+            layoutInnerDiv.innerHTML = ''; // Clear existing layout
+
+            // Use requestAnimationFrame to ensure we get an accurate clientWidth after any DOM changes
+            requestAnimationFrame(() => {
+                if (cabinLayoutContainer.clientWidth === 0) {
+                    console.warn("Cabin layout container has no width. Retrying.");
+                    setTimeout(() => createCabinLayout(aircraftType, classType), 50);
+                    return;
+                }
+
+                // Ratios for spacing, relative to a seat's width
+                const AISLE_RATIO = 0.5;
+                const LABEL_RATIO = 0.8;
+                const SEAT_GROUP_GAP_RATIO = 0.2;
+                const INNER_SEAT_GAP_RATIO = 0.1;
+
+                // Calculate total width in terms of "seat units"
+                const numSeats = config.seatLayout.reduce((acc, group) => acc + group.seats.length, 0);
+                const numAisles = config.seatLayout.filter(g => g.aisle).length;
+                const numSeatGroups = config.seatLayout.length;
+                const numLabels = 2;
+                const numSeatGroupGaps = numSeatGroups > 1 ? numSeatGroups - 1 - numAisles : 0;
+                const numInnerSeatGaps = config.seatLayout.reduce((acc, group) => acc + Math.max(0, group.seats.length - 1), 0);
+
+                const totalUnits = numSeats + 
+                                (numAisles * AISLE_RATIO) + 
+                                (numLabels * LABEL_RATIO) + 
+                                (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
+                                (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
                 
-                const rowLabel = (side) => {
-                    const label = document.createElement('div');
-                    label.className = 'w-6 sm:w-8 font-bold text-gray-500 dark:text-gray-400 text-sm sm:text-lg flex-shrink-0';
-                    label.textContent = rowNum;
-                    return label;
-                };
-                rowEl.appendChild(rowLabel('left'));
+                // Calculate pixel sizes
+                const containerWidth = cabinLayoutContainer.clientWidth;
+                const seatSize = Math.max(10, Math.floor(containerWidth / totalUnits)); // Min seat size of 10px
+                const aisleWidth = Math.floor(seatSize * AISLE_RATIO);
+                const labelWidth = Math.floor(seatSize * LABEL_RATIO);
+                const seatGroupGap = Math.floor(seatSize * SEAT_GROUP_GAP_RATIO);
+                const innerSeatGap = Math.floor(seatSize * INNER_SEAT_GAP_RATIO);
 
-                config.seatLayout.forEach(group => {
-                    const groupEl = document.createElement('div');
-                    // Removed flex-1 from groupEl, they will now tightly wrap their fixed-size children
-                    groupEl.className = 'flex gap-x-0.5 sm:gap-x-1'; 
-                    group.seats.forEach(seatLetter => {
-                        const seatEl = document.createElement('div');
-                        // Apply specific width/height, and ensure no flex growing/shrinking
-                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
-                        seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
-                        seatEl.textContent = seatLetter;
-                        groupEl.appendChild(seatEl);
+                const textSizeClass = seatSize > 44 ? 'text-base' : seatSize > 36 ? 'text-sm' : seatSize > 28 ? 'text-xs' : 'text-[10px]';
+                const labelTextSize = Math.max(8, seatSize * 0.4);
+
+                config.rows.forEach(rowNum => {
+                    const rowEl = document.createElement('div');
+                    rowEl.className = 'flex items-center justify-start w-full'; // Start from left
+
+                    const rowLabel = (side) => {
+                        const label = document.createElement('div');
+                        label.className = `font-bold text-gray-500 dark:text-gray-400 text-center flex-shrink-0 flex items-center justify-center`;
+                        label.style.width = `${labelWidth}px`;
+                        label.style.fontSize = `${labelTextSize}px`;
+                        label.textContent = rowNum;
+                        return label;
+                    };
+                    
+                    rowEl.appendChild(rowLabel('left'));
+
+                    // Add a flexible spacer to center the content
+                    const spacerLeft = document.createElement('div');
+                    spacerLeft.className = 'flex-grow';
+                    rowEl.appendChild(spacerLeft);
+
+                    config.seatLayout.forEach((group, index) => {
+                        const groupEl = document.createElement('div');
+                        groupEl.className = 'flex';
+                        groupEl.style.gap = `${innerSeatGap}px`;
+                        
+                        group.seats.forEach(seatLetter => {
+                            const seatEl = document.createElement('div');
+                            seatEl.className = `seat ${textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-md cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`;
+                            seatEl.style.width = `${seatSize}px`;
+                            seatEl.style.height = `${seatSize}px`;
+                            seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
+                            seatEl.textContent = seatLetter;
+                            groupEl.appendChild(seatEl);
+                        });
+                        rowEl.appendChild(groupEl);
+
+                        if (index < numSeatGroups - 1) {
+                            const spacer = document.createElement('div');
+                            spacer.className = 'flex-shrink-0';
+                            spacer.style.width = `${group.aisle ? aisleWidth : seatGroupGap}px`;
+                            rowEl.appendChild(spacer);
+                        }
                     });
-                    rowEl.appendChild(groupEl);
+                    
+                    const spacerRight = document.createElement('div');
+                    spacerRight.className = 'flex-grow';
+                    rowEl.appendChild(spacerRight);
 
-                    if (group.aisle) {
-                        const aisleEl = document.createElement('div');
-                        aisleEl.className = 'w-2 sm:w-4 md:w-8 flex-shrink-0';
-                        rowEl.appendChild(aisleEl);
-                    }
+                    rowEl.appendChild(rowLabel('right'));
+                    layoutInnerDiv.appendChild(rowEl);
                 });
-                rowEl.appendChild(rowLabel('right'));
-                cabinLayout.appendChild(rowEl);
+                // After creating the layout, re-apply the order statuses
+                updateUIWithOrders();
             });
         }
         
@@ -607,7 +656,7 @@
                 seat.classList.remove('ordered', 'delivered');
                 // Ensure default background and border for available seats in dark mode
                 seat.classList.add('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
-                seat.innerHTML = `<div class="font-bold text-sm sm:text-lg">${seat.dataset.seatId.replace(/\d+/g, '')}</div>`;
+                // The seat text (letter) is already set during creation
             });
 
             const currentClassOrders = allOrdersCache[currentAircraft][currentClass];
@@ -629,8 +678,10 @@
                     seatEl.classList.remove('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
                     seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                     if (order.customerName) {
-                        // Display customer name on the seat, with smaller text and truncation to fit
-                        seatEl.innerHTML = `<div class="text-[10px] leading-tight font-semibold truncate p-0.5" title="${order.customerName}">${order.customerName}</div>`;
+                        // Display customer initial on the seat, with smaller text to fit
+                        const seatSize = seatEl.clientWidth;
+                        const initialTextSize = Math.max(8, seatSize * 0.5);
+                        seatEl.innerHTML = `<div style="font-size: ${initialTextSize}px" class="font-semibold truncate" title="${order.customerName}">${order.customerName.charAt(0)}</div>`;
                     }
                 }
                 
@@ -673,6 +724,17 @@
             updateUIWithOrders();
             updateAircraftToggleButtons();
             updateClassToggleVisibility();
+
+            // Add resize listener to re-calculate layout
+            let resizeDebounceTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeDebounceTimer);
+                resizeDebounceTimer = setTimeout(() => {
+                    // Re-create the layout with new dimensions and re-apply order styles
+                    createCabinLayout(currentAircraft, currentClass);
+                    // No need to call updateUIWithOrders here, it's called inside createCabinLayout's animation frame
+                }, 200);
+            });
 
             cabinLayout.addEventListener('click', (e) => {
                 const seatEl = e.target.closest('.seat');
