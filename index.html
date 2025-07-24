@@ -90,6 +90,12 @@
             <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">Select a seat to take or view an order.</p>
         </header>
 
+        <!-- Class Selection Toggle -->
+        <div class="flex justify-center space-x-4 mb-6">
+            <button id="premium-economy-toggle" class="px-4 py-2 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600">Premium Economy</button>
+            <button id="economy-toggle" class="px-4 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Economy</button>
+        </div>
+
         <div class="flex justify-center items-center space-x-2 sm:space-x-4 mb-6 sm:mb-8 text-xs sm:text-sm">
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-blue-500 dark:bg-gray-700"></div><span class="ml-1 sm:ml-2">Available</span></div>
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 mr-1 sm:mr-2"></div>Ordered</div>
@@ -188,8 +194,31 @@
             "Spirits": { icon: "fa-solid fa-whiskey-glass", items: ["Vodka", "Gin", "Cream Liqueur", "Rum", "Cognac", "Cointreau"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon', 'mixer': 'fa-solid fa-blender' } }
         };
 
+        const CABIN_CONFIGS = {
+            premiumEconomy: {
+                rows: [16, 15, 14], // Rows from top to bottom
+                seatLayout: [
+                    { seats: ['K', 'J'], aisle: true },
+                    { seats: ['F', 'E', 'D'], aisle: true },
+                    { seats: ['B', 'A'], aisle: false }
+                ]
+            },
+            economy: {
+                rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
+                seatLayout: [
+                    { seats: ['A', 'B', 'C'], aisle: true },
+                    { seats: ['D', 'E', 'F'], aisle: true },
+                    { seats: ['G', 'H', 'J'], aisle: false }
+                ]
+            }
+        };
+
         // --- STATE ---
-        let ordersCache = {};
+        let currentClass = 'premiumEconomy'; // Default class
+        let allOrdersCache = {
+            premiumEconomy: {},
+            economy: {}
+        };
         let confirmAction = null;
         let debounceTimer;
 
@@ -215,6 +244,8 @@
         const confirmModalText = document.getElementById('confirm-modal-text');
         const confirmActionBtn = document.getElementById('confirm-action-btn');
         const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+        const premiumEconomyToggleBtn = document.getElementById('premium-economy-toggle');
+        const economyToggleBtn = document.getElementById('economy-toggle');
 
         
         // --- FUNCTIONS ---
@@ -280,7 +311,7 @@
 
         function saveOrdersToLocalStorage() {
             try {
-                localStorage.setItem('flightOrders', JSON.stringify(ordersCache));
+                localStorage.setItem('flightOrdersCache', JSON.stringify(allOrdersCache));
             } catch (e) {
                 console.error("Error saving to localStorage:", e);
             }
@@ -288,11 +319,11 @@
 
         function loadOrdersFromLocalStorage() {
             try {
-                const storedOrders = localStorage.getItem('flightOrders');
-                ordersCache = storedOrders ? JSON.parse(storedOrders) : {};
+                const storedOrders = localStorage.getItem('flightOrdersCache');
+                allOrdersCache = storedOrders ? JSON.parse(storedOrders) : { premiumEconomy: {}, economy: {} };
             } catch (e) {
                 console.error("Error loading from localStorage:", e);
-                ordersCache = {};
+                allOrdersCache = { premiumEconomy: {}, economy: {} };
             }
         }
 
@@ -321,13 +352,13 @@
             }
 
             if (!food && !drink && !customerName) {
-                delete ordersCache[seatId];
+                delete allOrdersCache[currentClass][seatId];
             } else {
-                ordersCache[seatId] = {
+                allOrdersCache[currentClass][seatId] = {
                     customerName: customerName,
                     food: food,
                     drink: drink,
-                    status: ordersCache[seatId]?.status || 'ordered',
+                    status: allOrdersCache[currentClass][seatId]?.status || 'ordered',
                     updatedBy: 'Local User',
                     updatedAt: new Date().toISOString()
                 };
@@ -368,11 +399,10 @@
             }
         }
 
-        function createCabinLayout() {
-            const rows = [16, 15, 14];
-            const seatConfig = [ { seats: ['K', 'J'], aisle: true }, { seats: ['F', 'E', 'D'], aisle: true }, { seats: ['B', 'A'], aisle: false } ];
-            cabinLayout.innerHTML = '';
-            rows.forEach(rowNum => {
+        function createCabinLayout(classType) {
+            const config = CABIN_CONFIGS[classType];
+            cabinLayout.innerHTML = ''; // Clear existing layout
+            config.rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
                 rowEl.className = 'flex items-center justify-center space-x-1 sm:space-x-2 w-full';
                 
@@ -384,7 +414,7 @@
                 };
                 rowEl.appendChild(rowLabel('left'));
 
-                seatConfig.forEach(group => {
+                config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
                     groupEl.className = 'flex space-x-1 sm:space-x-2';
                     group.seats.forEach(seatLetter => {
@@ -438,7 +468,7 @@
             document.title = `Order for ${seatId}`;
             seatIdInput.value = seatId;
             
-            const existingOrder = ordersCache[seatId];
+            const existingOrder = allOrdersCache[currentClass][seatId];
             if (existingOrder) {
                 customerNameInput.value = existingOrder.customerName || '';
                 if (existingOrder.food) {
@@ -529,7 +559,8 @@
                 seat.innerHTML = `<div class="font-bold text-sm sm:text-lg">${seat.dataset.seatId.replace(/\d+/g, '')}</div>`;
             });
 
-            const sortedOrders = Object.entries(ordersCache).sort(([seatA], [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
+            const currentClassOrders = allOrdersCache[currentClass];
+            const sortedOrders = Object.entries(currentClassOrders).sort(([seatA], [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
 
             if (sortedOrders.length === 0) {
                 ordersList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 italic">No orders yet.</p>';
@@ -584,9 +615,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupDarkMode();
             populateMenus();
-            createCabinLayout();
             loadOrdersFromLocalStorage();
+            
+            // Initial render based on default class
+            createCabinLayout(currentClass);
             updateUIWithOrders();
+            updateClassToggleButtons();
 
             cabinLayout.addEventListener('click', (e) => {
                 const seatEl = e.target.closest('.seat');
@@ -600,7 +634,7 @@
                 const seatId = seatIdInput.value;
                 if (seatId) {
                     showConfirmModal(`Are you sure you want to delete the order for seat ${seatId}?`, () => {
-                        delete ordersCache[seatId];
+                        delete allOrdersCache[currentClass][seatId];
                         saveOrdersToLocalStorage();
                         updateUIWithOrders();
                         toggleModal(false);
@@ -640,8 +674,8 @@
             });
 
             clearAllBtn.addEventListener('click', () => {
-                showConfirmModal("Are you sure you want to clear all orders? This cannot be undone.", () => {
-                    ordersCache = {};
+                showConfirmModal("Are you sure you want to clear all orders for the current class? This cannot be undone.", () => {
+                    allOrdersCache[currentClass] = {}; // Clear only orders for the current class
                     saveOrdersToLocalStorage();
                     updateUIWithOrders();
                 });
@@ -653,10 +687,10 @@
 
                 if (toggleStatusBtn) {
                     const seatId = toggleStatusBtn.dataset.seatId;
-                    if (ordersCache[seatId]) {
-                        ordersCache[seatId].status = ordersCache[seatId].status === 'ordered' ? 'delivered' : 'ordered';
-                        ordersCache[seatId].updatedBy = 'Local User';
-                        ordersCache[seatId].updatedAt = new Date().toISOString();
+                    if (allOrdersCache[currentClass][seatId]) {
+                        allOrdersCache[currentClass][seatId].status = allOrdersCache[currentClass][seatId].status === 'ordered' ? 'delivered' : 'ordered';
+                        allOrdersCache[currentClass][seatId].updatedBy = 'Local User';
+                        allOrdersCache[currentClass][seatId].updatedAt = new Date().toISOString();
                         saveOrdersToLocalStorage();
                         updateUIWithOrders();
                     }
@@ -750,6 +784,34 @@
                 debounce(autoSaveOrder, 500);
             }
 
+            function updateClassToggleButtons() {
+                if (currentClass === 'premiumEconomy') {
+                    premiumEconomyToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                    premiumEconomyToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    economyToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    economyToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                } else {
+                    economyToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                    economyToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    premiumEconomyToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    premiumEconomyToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                }
+            }
+
+            // Event listeners for class toggles
+            premiumEconomyToggleBtn.addEventListener('click', () => {
+                currentClass = 'premiumEconomy';
+                createCabinLayout(currentClass);
+                updateUIWithOrders();
+                updateClassToggleButtons();
+            });
+
+            economyToggleBtn.addEventListener('click', () => {
+                currentClass = 'economy';
+                createCabinLayout(currentClass);
+                updateUIWithOrders();
+                updateClassToggleButtons();
+            });
         });
     </script>
 </body>
