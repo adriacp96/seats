@@ -422,8 +422,8 @@
                     groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1';
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use fixed width and height for seats to ensure consistent size
-                        seatEl.className = 'seat w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
+                        // Adjusted fixed width and height for seats to ensure consistent size and fit on iPhone 14
+                        seatEl.className = 'seat w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14 font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
