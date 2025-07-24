@@ -223,9 +223,9 @@
                 economy: {
                     rows: Array.from({ length: 50 - 17 + 1 }, (_, i) => 50 - i), // Rows 50 down to 17
                     seatLayout: [
-                        { seats: ['K', 'J', 'H'], aisle: true },
-                        { seats: ['G', 'F', 'E'], aisle: true },
-                        { seats: ['D', 'C', 'B', 'A'], aisle: false } // Assuming 4 seats in this group based on common B777 layouts, adjust if needed
+                        { seats: ['A', 'B', 'C'], aisle: true }, // 3 seats
+                        { seats: ['D', 'E', 'F', 'G'], aisle: true }, // 4 seats
+                        { seats: ['H', 'J', 'K'], aisle: false } // 3 seats
                     ]
                 }
             }
@@ -265,7 +265,7 @@
         const closeBtn = document.getElementById('close-btn');
         const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
         const confirmModal = document.getElementById('confirm-modal');
-        const confirmModalText = document.getElementById('confirm-modal-text');
+        const confirmModalText = document = document.getElementById('confirm-modal-text');
         const confirmActionBtn = document.getElementById('confirm-action-btn');
         const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
         const a350ToggleBtn = document.getElementById('a350-toggle');
