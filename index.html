@@ -452,8 +452,7 @@
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
                     // Make each group a flexible container and allow it to grow
-                    // Removed flex-1 from groupEl to prevent excessive stretching when fewer seats
-                    groupEl.className = 'flex space-x-1 sm:space-x-2'; // Removed flex-1 here
+                    groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1'; // Re-added flex-1
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
                         // Use flex-1 for seats to distribute space within their group,
