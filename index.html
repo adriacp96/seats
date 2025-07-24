@@ -233,6 +233,17 @@
             }
         };
 
+        // Define specific seat sizing classes for each configuration
+        const SEAT_SIZES_BY_CONFIG = {
+            a350: {
+                premiumEconomy: { widthClass: 'w-12 h-12', textSizeClass: 'text-sm' }, // Larger seats for fewer across
+                economy: { widthClass: 'w-9 h-9', textSizeClass: 'text-[10px]' } // Smaller for more across
+            },
+            b777: {
+                economy: { widthClass: 'w-8 h-8', textSizeClass: 'text-[8px]' } // Smallest for 10 across
+            }
+        };
+
         // --- STATE ---
         let currentAircraft = 'a350'; // Default aircraft
         let currentClass = 'premiumEconomy'; // Default class for A350
@@ -259,7 +270,7 @@
         const customerNameInput = document.getElementById('customer-name-input');
         const foodSelectionContainer = document.getElementById('food-selection-container');
         const cancelBtnX = document.getElementById('cancel-btn-x');
-        const deleteOrderBtn = document = document.getElementById('delete-order-btn');
+        const deleteOrderBtn = document.getElementById('delete-order-btn');
         const drinkCategoryContainer = document.getElementById('drink-category-container');
         const drinkAccordionContainer = document.getElementById('drink-accordion-container');
         const summaryText = document.getElementById('summary-text');
@@ -436,6 +447,8 @@
 
         function createCabinLayout(aircraftType, classType) {
             const config = AIRCRAFT_CONFIGS[aircraftType][classType];
+            const seatSize = SEAT_SIZES_BY_CONFIG[aircraftType][classType]; // Get the specific size for this config
+
             cabinLayout.innerHTML = ''; // Clear existing layout
             config.rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
@@ -456,9 +469,8 @@
                     groupEl.className = 'flex flex-1 gap-x-0.5 sm:gap-x-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use flex-1 aspect-square for proportional sizing and square shape
-                        // min-w and max-w define the bounds for seat size, ensuring consistency within layout
-                        seatEl.className = 'seat flex-1 aspect-square min-w-[18px] max-w-[40px] font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600'; 
+                        // Apply the specific width and height classes, and ensure no flex growing/shrinking
+                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
