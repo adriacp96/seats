@@ -93,13 +93,11 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
 
     <div id="app-container" class="container mx-auto p-2 sm:p-4 md:p-8 flex-1 flex flex-col">
-        <!-- Aircraft Selection Toggle -->
         <div class="flex justify-center space-x-2 mb-2 mt-4">
             <button id="a350-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Airbus A350</button>
             <button id="b777-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Boeing 777-300</button>
         </div>
 
-        <!-- Class Selection Toggle (for A350 only) -->
         <div id="class-selection-container" class="flex justify-center space-x-2 mb-4">
             <button id="premium-economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Premium Economy</button>
             <button id="economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Economy</button>
@@ -112,7 +110,6 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <!-- Cabin Layout: Changed overflow-x-auto to overflow-x-hidden -->
             <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-hidden overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
@@ -133,15 +130,14 @@
     <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
         <div id="order-modal" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg flex flex-col transform scale-95 opacity-0 max-h-[85vh]">
             <div class="flex-shrink-0 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-                   <h2 id="order-modal-title" class="text-2xl font-bold">Order</h2>
-                   <button id="cancel-btn-x" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl">&times;</button>
+                    <h2 id="order-modal-title" class="text-2xl font-bold">Order</h2>
+                    <button id="cancel-btn-x" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl">&times;</button>
             </div>
             
             <div class="flex-grow overflow-y-auto p-4 sm:p-6">
                 <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
                     
-                    <!-- Customer Name Input -->
                     <div>
                         <label for="customer-name-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><i class="fa-solid fa-user mr-2"></i>Customer Name</label>
                         <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
@@ -651,12 +647,14 @@
         }
 
         function updateUIWithOrders() {
-            // Reset all seats to their default state first
+            // Reset all seats to their default state first, restoring the seat letter
             document.querySelectorAll('.seat').forEach(seat => {
                 seat.classList.remove('ordered', 'delivered');
-                // Ensure default background and border for available seats in dark mode
                 seat.classList.add('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
-                // The seat text (letter) is already set during creation
+                const seatId = seat.dataset.seatId;
+                const seatLetter = seatId.replace(/\d/g, ''); // Extract letter from e.g., "16K"
+                seat.innerHTML = ''; // Clear any previous content (like a name div)
+                seat.textContent = seatLetter; // Restore the letter
             });
 
             const currentClassOrders = allOrdersCache[currentAircraft][currentClass];
@@ -678,10 +676,14 @@
                     seatEl.classList.remove('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
                     seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                     if (order.customerName) {
-                        // Display customer initial on the seat, with smaller text to fit
+                        // Display customer's full name, sized to fit horizontally
                         const seatSize = seatEl.clientWidth;
-                        const initialTextSize = Math.max(8, seatSize * 0.5);
-                        seatEl.innerHTML = `<div style="font-size: ${initialTextSize}px" class="font-semibold truncate" title="${order.customerName}">${order.customerName.charAt(0)}</div>`;
+                        // Calculate a font size. Let's make it about 1/5th of the seat's width, with a minimum size.
+                        const nameFontSize = Math.max(6, Math.floor(seatSize * 0.2)); 
+                        seatEl.textContent = ''; // Clear seat letter
+                        seatEl.innerHTML = `<div style="font-size: ${nameFontSize}px; line-height: 1.1;" class="w-full font-semibold overflow-hidden whitespace-nowrap text-center px-0.5" title="${order.customerName}">
+                                                ${order.customerName}
+                                            </div>`;
                     }
                 }
                 
