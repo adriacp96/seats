@@ -80,6 +80,11 @@
             border-color: #34D399;
             color: #D1FAE5;
         }
+        /* Custom radius for iPhone-like bottom corners */
+        .rounded-iphone-bottom {
+            border-bottom-left-radius: 35px;
+            border-bottom-right-radius: 35px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
@@ -110,7 +115,7 @@
                 </div>
             </div>
 
-            <div id="orders-summary" class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-t-xl rounded-b-3xl shadow-lg flex flex-col flex-1">
+            <div id="orders-summary" class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-t-xl rounded-iphone-bottom shadow-lg flex flex-col flex-1">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold">Orders Summary</h2>
                     <button id="clear-all-btn" class="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Clear All</button>
@@ -450,10 +455,9 @@
                     groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use flex-1 for seats to proportionally fill space, and min-w/max-w for constraints.
-                        // text size is made smaller for tighter fit on small screens.
-                        // Added flex-shrink-0 to explicitly prevent shrinking below min-w
-                        seatEl.className = 'seat flex-1 aspect-square min-w-[20px] max-w-[40px] font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-shrink-0'; 
+                        // Use fixed width and height for seats to ensure consistent size across all layouts.
+                        // Added flex-grow-0 and flex-shrink-0 to explicitly prevent growing/shrinking.
+                        seatEl.className = 'seat w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0'; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
