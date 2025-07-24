@@ -422,8 +422,8 @@
                     groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1';
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use flex-1 for seats to distribute space, aspect-square for ratio, and min-w to prevent extreme shrinking
-                        seatEl.className = 'seat flex-1 aspect-square min-w-[32px] sm:min-w-[40px] md:min-w-[48px] font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
+                        // Use fixed width and height for seats to ensure consistent size
+                        seatEl.className = 'seat w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
