@@ -469,8 +469,8 @@
                     groupEl.className = 'flex flex-1 gap-x-0.5 sm:gap-x-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Apply the specific width and height classes, and ensure no flex growing/shrinking
-                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
+                        // Apply flex-1 aspect-square for proportional sizing, along with min/max width for bounds
+                        seatEl.className = `seat flex-1 aspect-square min-w-[16px] max-w-[40px] font-bold ${seatSize.textSizeClass} bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
