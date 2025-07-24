@@ -404,11 +404,13 @@
             cabinLayout.innerHTML = ''; // Clear existing layout
             config.rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
+                // Ensure the row is a flex container and takes full width
                 rowEl.className = 'flex items-center justify-center space-x-1 sm:space-x-2 w-full';
                 
                 const rowLabel = (side) => {
                     const label = document.createElement('div');
-                    label.className = 'w-6 sm:w-8 font-bold text-gray-500 dark:text-gray-400 text-sm sm:text-lg';
+                    // Use flex-shrink-0 to prevent labels from shrinking too much
+                    label.className = 'w-6 sm:w-8 font-bold text-gray-500 dark:text-gray-400 text-sm sm:text-lg flex-shrink-0';
                     label.textContent = rowNum;
                     return label;
                 };
@@ -416,10 +418,12 @@
 
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
-                    groupEl.className = 'flex space-x-1 sm:space-x-2';
+                    // Make each group a flexible container and allow it to grow
+                    groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1';
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        seatEl.className = 'seat w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-shrink-0';
+                        // Use flex-1 for seats to distribute space, aspect-square for ratio, and min-w to prevent extreme shrinking
+                        seatEl.className = 'seat flex-1 aspect-square min-w-[32px] sm:min-w-[40px] md:min-w-[48px] font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
@@ -428,7 +432,8 @@
 
                     if (group.aisle) {
                         const aisleEl = document.createElement('div');
-                        aisleEl.className = 'w-2 sm:w-4 md:w-8';
+                        // Use flex-shrink-0 for aisle to maintain its size
+                        aisleEl.className = 'w-2 sm:w-4 md:w-8 flex-shrink-0';
                         rowEl.appendChild(aisleEl);
                     }
                 });
