@@ -34,22 +34,22 @@
         }
         /* Dark mode styles for ordered and delivered seats */
         .seat.ordered {
-            background-color: #10B981; /* Green 500 */
+            background-color: #EF4444; /* Red 500 */
             color: white;
-            border-color: #059669; /* Green 600 */
+            border-color: #DC2626; /* Red 600 */
         }
         .dark .seat.ordered {
-            background-color: #047857; /* Darker Green for dark mode */
-            border-color: #065F46; /* Even darker green for dark mode border */
+            background-color: #B91C1C; /* Darker Red for dark mode */
+            border-color: #991B1B; /* Even darker red for dark mode border */
         }
         .seat.delivered {
-            background-color: #6366F1; /* Indigo 500 */
+            background-color: #22C55E; /* Green 500 */
             color: white;
-            border-color: #4F46E5; /* Indigo 600 */
+            border-color: #16A34A; /* Green 600 */
         }
         .dark .seat.delivered {
-            background-color: #4338CA; /* Darker Indigo for dark mode */
-            border-color: #3730A3; /* Even darker indigo for dark mode border */
+            background-color: #15803D; /* Darker Green for dark mode */
+            border-color: #14532D; /* Even darker green for dark mode border */
         }
         #modal-backdrop, #confirm-modal-backdrop {
             transition: opacity 0.3s ease-in-out;
@@ -98,8 +98,8 @@
 
         <div class="flex justify-center items-center space-x-2 sm:space-x-4 mb-6 sm:mb-8 text-xs sm:text-sm">
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-blue-500 dark:bg-gray-700"></div><span class="ml-1 sm:ml-2">Available</span></div>
-            <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 mr-1 sm:mr-2"></div>Ordered</div>
-            <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-indigo-500 mr-1 sm:mr-2"></div>Delivered</div>
+            <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-500 mr-1 sm:mr-2"></div>Ordered</div>
+            <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 mr-1 sm:mr-2"></div>Delivered</div>
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
@@ -198,17 +198,17 @@
             premiumEconomy: {
                 rows: [16, 15, 14], // Rows from top to bottom
                 seatLayout: [
-                    { seats: ['K', 'J'], aisle: true },
-                    { seats: ['F', 'E', 'D'], aisle: true },
-                    { seats: ['B', 'A'], aisle: false }
+                    { seats: ['J', 'K'], aisle: true }, // Reordered and reversed letters
+                    { seats: ['D', 'E', 'F'], aisle: true }, // Reordered and reversed letters
+                    { seats: ['A', 'B'], aisle: false } // Reordered and reversed letters
                 ]
             },
             economy: {
                 rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
                 seatLayout: [
-                    { seats: ['A', 'B', 'C'], aisle: true },
-                    { seats: ['D', 'E', 'F'], aisle: true },
-                    { seats: ['G', 'H', 'J'], aisle: false }
+                    { seats: ['J', 'H', 'G'], aisle: true }, // Reordered and reversed letters
+                    { seats: ['F', 'E', 'D'], aisle: true }, // Reordered and reversed letters
+                    { seats: ['C', 'B', 'A'], aisle: false } // Reordered and reversed letters
                 ]
             }
         };
@@ -592,10 +592,10 @@
                             ${order.customerName ? `<p class="text-sm font-semibold text-blue-600 dark:text-blue-400">${order.customerName}</p>` : ''}
                         </div>
                         <div class="flex items-center space-x-1 flex-shrink-0">
-                            <span class="text-xs font-medium px-2 py-1 rounded-full ${order.status === 'ordered' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'}">
+                            <span class="text-xs font-medium px-2 py-1 rounded-full ${order.status === 'ordered' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}">
                                 ${order.status === 'ordered' ? 'Ordered' : 'Delivered'}
                             </span>
-                            <button data-seat-id="${seatId}" data-status="${order.status}" class="toggle-status-btn w-6 h-6 flex items-center justify-center rounded-full text-white ${order.status === 'ordered' ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-green-500 hover:bg-green-600'}" title="${order.status === 'ordered' ? 'Mark as Delivered' : 'Mark as Ordered'}">
+                            <button data-seat-id="${seatId}" data-status="${order.status}" class="toggle-status-btn w-6 h-6 flex items-center justify-center rounded-full text-white ${order.status === 'ordered' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}" title="${order.status === 'ordered' ? 'Mark as Delivered' : 'Mark as Ordered'}">
                                 <i class="fas ${order.status === 'ordered' ? 'fa-check' : 'fa-undo'} text-xs"></i>
                             </button>
                             <button data-seat-id="${seatId}" class="edit-order-btn w-6 h-6 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600" title="Edit Order">
