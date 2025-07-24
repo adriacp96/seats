@@ -109,7 +109,7 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg">
+            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-auto">
                 <h2 class="text-xl font-semibold mb-6 text-center">Cabin Layout</h2>
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4">
                 </div>
@@ -223,9 +223,9 @@
                 economy: {
                     rows: Array.from({ length: 50 - 17 + 1 }, (_, i) => 50 - i), // Rows 50 down to 17
                     seatLayout: [
-                        { seats: ['A', 'B', 'C'], aisle: true }, // 3 seats
-                        { seats: ['D', 'E', 'F', 'G'], aisle: true }, // 4 seats
-                        { seats: ['H', 'J', 'K'], aisle: false } // 3 seats
+                        { seats: ['K', 'J', 'H'], aisle: true }, // K, J, H from left to right (3 seats)
+                        { seats: ['G', 'F', 'E', 'D'], aisle: true }, // G, F, E, D from left to right (4 seats)
+                        { seats: ['C', 'B', 'A'], aisle: false } // C, B, A from left to right (3 seats)
                     ]
                 }
             }
@@ -265,7 +265,7 @@
         const closeBtn = document.getElementById('close-btn');
         const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
         const confirmModal = document.getElementById('confirm-modal');
-        const confirmModalText = document = document.getElementById('confirm-modal-text');
+        const confirmModalText = document.getElementById('confirm-modal-text');
         const confirmActionBtn = document.getElementById('confirm-action-btn');
         const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
         const a350ToggleBtn = document.getElementById('a350-toggle');
@@ -451,14 +451,13 @@
 
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
-                    // Make each group a flexible container and allow it to grow
-                    groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1'; // Re-added flex-1
+                    // Make each group a flex container that will wrap its fixed-size children
+                    groupEl.className = 'flex space-x-1 sm:space-x-2'; // Removed flex-1 here
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use flex-1 for seats to distribute space within their group,
-                        // and min-w to prevent them from becoming too small.
-                        // aspect-square maintains square shape.
-                        seatEl.className = 'seat flex-1 aspect-square min-w-[24px] sm:min-w-[32px] md:min-w-[40px] font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
+                        // Use fixed width and height for seats to ensure consistent size across all layouts.
+                        // Added flex-shrink-0 to ensure they don't shrink below their defined size.
+                        seatEl.className = 'seat w-8 h-8 text-[10px] sm:w-10 sm:h-10 sm:text-xs md:w-12 md:h-12 md:text-sm font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-shrink-0'; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
@@ -502,7 +501,7 @@
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
-            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '';
             
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600 dark:text-blue-400">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
