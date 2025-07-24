@@ -85,13 +85,8 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
 
     <div id="app-container" class="container mx-auto p-2 sm:p-4 md:p-8 flex-1 flex flex-col">
-        <header class="text-center mb-6 sm:mb-8">
-            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-700 dark:text-gray-100">Flight Order Assistant</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">Select a seat to take or view an order.</p>
-        </header>
-
         <!-- Aircraft Selection Toggle -->
-        <div class="flex justify-center space-x-4 mb-6">
+        <div class="flex justify-center space-x-4 mb-3 mt-4">
             <button id="a350-toggle" class="px-4 py-2 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600">Airbus A350</button>
             <button id="b777-toggle" class="px-4 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Boeing 777-300</button>
         </div>
@@ -173,7 +168,7 @@
         </div>
     </div>
 
-    <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-50">
+    <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
         <div id="confirm-modal" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-95 opacity-0">
             <h3 id="confirm-modal-title" class="text-lg font-bold">Are you sure?</h3>
             <p id="confirm-modal-text" class="text-sm text-gray-600 dark:text-gray-400 mt-2 mb-6">This action cannot be undone.</p>
@@ -457,7 +452,8 @@
                         const seatEl = document.createElement('div');
                         // Use flex-1 for seats to proportionally fill space, and min-w/max-w for constraints.
                         // text size is made smaller for tighter fit on small screens.
-                        seatEl.className = 'seat flex-1 aspect-square min-w-[20px] max-w-[40px] font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600'; 
+                        // Added flex-shrink-0 to explicitly prevent shrinking below min-w
+                        seatEl.className = 'seat flex-1 aspect-square min-w-[20px] max-w-[40px] font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-shrink-0'; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
@@ -501,7 +497,7 @@
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
-            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '';
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
             
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600 dark:text-blue-400">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
