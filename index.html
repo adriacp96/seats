@@ -90,8 +90,14 @@
             <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">Select a seat to take or view an order.</p>
         </header>
 
-        <!-- Class Selection Toggle -->
+        <!-- Aircraft Selection Toggle -->
         <div class="flex justify-center space-x-4 mb-6">
+            <button id="a350-toggle" class="px-4 py-2 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600">Airbus A350</button>
+            <button id="b777-toggle" class="px-4 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Boeing 777-300</button>
+        </div>
+
+        <!-- Class Selection Toggle (for A350 only) -->
+        <div id="class-selection-container" class="flex justify-center space-x-4 mb-6">
             <button id="premium-economy-toggle" class="px-4 py-2 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600">Premium Economy</button>
             <button id="economy-toggle" class="px-4 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Economy</button>
         </div>
@@ -194,30 +200,48 @@
             "Spirits": { icon: "fa-solid fa-whiskey-glass", items: ["Vodka", "Gin", "Cream Liqueur", "Rum", "Cognac", "Cointreau"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon', 'mixer': 'fa-solid fa-blender' } }
         };
 
-        const CABIN_CONFIGS = {
-            premiumEconomy: {
-                rows: [16, 15, 14], // Rows from top to bottom
-                seatLayout: [
-                    { seats: ['K', 'J'], aisle: true }, // Changed to K J
-                    { seats: ['F', 'E', 'D'], aisle: true }, // Changed to F E D
-                    { seats: ['B', 'A'], aisle: false } // Changed to B A
-                ]
+        const AIRCRAFT_CONFIGS = {
+            a350: {
+                premiumEconomy: {
+                    rows: [16, 15, 14], // Rows from top to bottom
+                    seatLayout: [
+                        { seats: ['K', 'J'], aisle: true },
+                        { seats: ['F', 'E', 'D'], aisle: true },
+                        { seats: ['B', 'A'], aisle: false }
+                    ]
+                },
+                economy: {
+                    rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
+                    seatLayout: [
+                        { seats: ['J', 'H', 'G'], aisle: true },
+                        { seats: ['F', 'E', 'D'], aisle: true },
+                        { seats: ['C', 'B', 'A'], aisle: false }
+                    ]
+                }
             },
-            economy: {
-                rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
-                seatLayout: [
-                    { seats: ['J', 'H', 'G'], aisle: true },
-                    { seats: ['F', 'E', 'D'], aisle: true },
-                    { seats: ['C', 'B', 'A'], aisle: false }
-                ]
+            b777: {
+                economy: {
+                    rows: Array.from({ length: 50 - 17 + 1 }, (_, i) => 50 - i), // Rows 50 down to 17
+                    seatLayout: [
+                        { seats: ['K', 'J', 'H'], aisle: true },
+                        { seats: ['G', 'F', 'E'], aisle: true },
+                        { seats: ['D', 'C', 'B', 'A'], aisle: false } // Assuming 4 seats in this group based on common B777 layouts, adjust if needed
+                    ]
+                }
             }
         };
 
         // --- STATE ---
-        let currentClass = 'premiumEconomy'; // Default class
+        let currentAircraft = 'a350'; // Default aircraft
+        let currentClass = 'premiumEconomy'; // Default class for A350
         let allOrdersCache = {
-            premiumEconomy: {},
-            economy: {}
+            a350: {
+                premiumEconomy: {},
+                economy: {}
+            },
+            b777: {
+                economy: {}
+            }
         };
         let confirmAction = null;
         let debounceTimer;
@@ -244,8 +268,11 @@
         const confirmModalText = document.getElementById('confirm-modal-text');
         const confirmActionBtn = document.getElementById('confirm-action-btn');
         const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+        const a350ToggleBtn = document.getElementById('a350-toggle');
+        const b777ToggleBtn = document.getElementById('b777-toggle');
         const premiumEconomyToggleBtn = document.getElementById('premium-economy-toggle');
         const economyToggleBtn = document.getElementById('economy-toggle');
+        const classSelectionContainer = document.getElementById('class-selection-container');
 
         
         // --- FUNCTIONS ---
@@ -320,10 +347,16 @@
         function loadOrdersFromLocalStorage() {
             try {
                 const storedOrders = localStorage.getItem('flightOrdersCache');
-                allOrdersCache = storedOrders ? JSON.parse(storedOrders) : { premiumEconomy: {}, economy: {} };
+                allOrdersCache = storedOrders ? JSON.parse(storedOrders) : {
+                    a350: { premiumEconomy: {}, economy: {} },
+                    b777: { economy: {} }
+                };
             } catch (e) {
                 console.error("Error loading from localStorage:", e);
-                allOrdersCache = { premiumEconomy: {}, economy: {} };
+                allOrdersCache = {
+                    a350: { premiumEconomy: {}, economy: {} },
+                    b777: { economy: {} }
+                };
             }
         }
 
@@ -352,13 +385,13 @@
             }
 
             if (!food && !drink && !customerName) {
-                delete allOrdersCache[currentClass][seatId];
+                delete allOrdersCache[currentAircraft][currentClass][seatId];
             } else {
-                allOrdersCache[currentClass][seatId] = {
+                allOrdersCache[currentAircraft][currentClass][seatId] = {
                     customerName: customerName,
                     food: food,
                     drink: drink,
-                    status: allOrdersCache[currentClass][seatId]?.status || 'ordered',
+                    status: allOrdersCache[currentAircraft][currentClass][seatId]?.status || 'ordered',
                     updatedBy: 'Local User',
                     updatedAt: new Date().toISOString()
                 };
@@ -399,8 +432,8 @@
             }
         }
 
-        function createCabinLayout(classType) {
-            const config = CABIN_CONFIGS[classType];
+        function createCabinLayout(aircraftType, classType) {
+            const config = AIRCRAFT_CONFIGS[aircraftType][classType];
             cabinLayout.innerHTML = ''; // Clear existing layout
             config.rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
@@ -419,11 +452,14 @@
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
                     // Make each group a flexible container and allow it to grow
-                    groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1';
+                    // Removed flex-1 from groupEl to prevent excessive stretching when fewer seats
+                    groupEl.className = 'flex space-x-1 sm:space-x-2'; // Removed flex-1 here
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Adjusted fixed width and height for seats to ensure consistent size and fit on iPhone 14
-                        seatEl.className = 'seat w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14 font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
+                        // Use flex-1 for seats to distribute space within their group,
+                        // and min-w to prevent them from becoming too small.
+                        // aspect-square maintains square shape.
+                        seatEl.className = 'seat flex-1 aspect-square min-w-[24px] sm:min-w-[32px] md:min-w-[40px] font-bold text-sm sm:text-lg bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600';
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
@@ -473,7 +509,7 @@
             document.title = `Order for ${seatId}`;
             seatIdInput.value = seatId;
             
-            const existingOrder = allOrdersCache[currentClass][seatId];
+            const existingOrder = allOrdersCache[currentAircraft][currentClass][seatId];
             if (existingOrder) {
                 customerNameInput.value = existingOrder.customerName || '';
                 if (existingOrder.food) {
@@ -564,7 +600,7 @@
                 seat.innerHTML = `<div class="font-bold text-sm sm:text-lg">${seat.dataset.seatId.replace(/\d+/g, '')}</div>`;
             });
 
-            const currentClassOrders = allOrdersCache[currentClass];
+            const currentClassOrders = allOrdersCache[currentAircraft][currentClass];
             const sortedOrders = Object.entries(currentClassOrders).sort(([seatA], [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
 
             if (sortedOrders.length === 0) {
@@ -622,10 +658,11 @@
             populateMenus();
             loadOrdersFromLocalStorage();
             
-            // Initial render based on default class
-            createCabinLayout(currentClass);
+            // Initial render based on default aircraft and class
+            createCabinLayout(currentAircraft, currentClass);
             updateUIWithOrders();
-            updateClassToggleButtons();
+            updateAircraftToggleButtons();
+            updateClassToggleVisibility();
 
             cabinLayout.addEventListener('click', (e) => {
                 const seatEl = e.target.closest('.seat');
@@ -639,7 +676,7 @@
                 const seatId = seatIdInput.value;
                 if (seatId) {
                     showConfirmModal(`Are you sure you want to delete the order for seat ${seatId}?`, () => {
-                        delete allOrdersCache[currentClass][seatId];
+                        delete allOrdersCache[currentAircraft][currentClass][seatId];
                         saveOrdersToLocalStorage();
                         updateUIWithOrders();
                         toggleModal(false);
@@ -680,7 +717,7 @@
 
             clearAllBtn.addEventListener('click', () => {
                 showConfirmModal("Are you sure you want to clear all orders for the current class? This cannot be undone.", () => {
-                    allOrdersCache[currentClass] = {}; // Clear only orders for the current class
+                    allOrdersCache[currentAircraft][currentClass] = {}; // Clear only orders for the current class
                     saveOrdersToLocalStorage();
                     updateUIWithOrders();
                 });
@@ -692,10 +729,10 @@
 
                 if (toggleStatusBtn) {
                     const seatId = toggleStatusBtn.dataset.seatId;
-                    if (allOrdersCache[currentClass][seatId]) {
-                        allOrdersCache[currentClass][seatId].status = allOrdersCache[currentClass][seatId].status === 'ordered' ? 'delivered' : 'ordered';
-                        allOrdersCache[currentClass][seatId].updatedBy = 'Local User';
-                        allOrdersCache[currentClass][seatId].updatedAt = new Date().toISOString();
+                    if (allOrdersCache[currentAircraft][currentClass][seatId]) {
+                        allOrdersCache[currentAircraft][currentClass][seatId].status = allOrdersCache[currentAircraft][currentClass][seatId].status === 'ordered' ? 'delivered' : 'ordered';
+                        allOrdersCache[currentAircraft][currentClass][seatId].updatedBy = 'Local User';
+                        allOrdersCache[currentAircraft][currentClass][seatId].updatedAt = new Date().toISOString();
                         saveOrdersToLocalStorage();
                         updateUIWithOrders();
                     }
@@ -789,6 +826,20 @@
                 debounce(autoSaveOrder, 500);
             }
 
+            function updateAircraftToggleButtons() {
+                if (currentAircraft === 'a350') {
+                    a350ToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                    a350ToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    b777ToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    b777ToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                } else {
+                    b777ToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                    b777ToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    a350ToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    a350ToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                }
+            }
+
             function updateClassToggleButtons() {
                 if (currentClass === 'premiumEconomy') {
                     premiumEconomyToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
@@ -803,17 +854,46 @@
                 }
             }
 
-            // Event listeners for class toggles
+            function updateClassToggleVisibility() {
+                if (currentAircraft === 'a350') {
+                    classSelectionContainer.classList.remove('hidden');
+                } else {
+                    classSelectionContainer.classList.add('hidden');
+                }
+            }
+
+            // Event listeners for aircraft toggles
+            a350ToggleBtn.addEventListener('click', () => {
+                currentAircraft = 'a350';
+                currentClass = 'premiumEconomy'; // Default to premium economy for A350
+                createCabinLayout(currentAircraft, currentClass);
+                updateUIWithOrders();
+                updateAircraftToggleButtons();
+                updateClassToggleButtons(); // Update class buttons for A350
+                updateClassToggleVisibility();
+            });
+
+            b777ToggleBtn.addEventListener('click', () => {
+                currentAircraft = 'b777';
+                currentClass = 'economy'; // Only economy for B777
+                createCabinLayout(currentAircraft, currentClass);
+                updateUIWithOrders();
+                updateAircraftToggleButtons();
+                updateClassToggleButtons(); // Update class buttons for B777
+                updateClassToggleVisibility();
+            });
+
+            // Event listeners for class toggles (within A350)
             premiumEconomyToggleBtn.addEventListener('click', () => {
                 currentClass = 'premiumEconomy';
-                createCabinLayout(currentClass);
+                createCabinLayout(currentAircraft, currentClass);
                 updateUIWithOrders();
                 updateClassToggleButtons();
             });
 
             economyToggleBtn.addEventListener('click', () => {
                 currentClass = 'economy';
-                createCabinLayout(currentClass);
+                createCabinLayout(currentAircraft, currentClass);
                 updateUIWithOrders();
                 updateClassToggleButtons();
             });
