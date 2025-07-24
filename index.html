@@ -97,6 +97,7 @@
         <div class="flex justify-center space-x-2 mb-2 mt-4">
             <button id="a350-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Airbus A350</button>
             <button id="b777-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Boeing 777-300</button>
+            <button id="a380-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Airbus A380-800</button>
         </div>
 
         <!-- Class Selection Toggle (for A350 only) -->
@@ -231,6 +232,16 @@
                         { seats: ['C', 'B', 'A'], aisle: false } // C, B, A from left to right (3 seats)
                     ]
                 }
+            },
+            a380: {
+                economy: {
+                    rows: Array.from({ length: 88 - 43 + 1 }, (_, i) => 88 - i), // Rows 88 down to 43
+                    seatLayout: [
+                        { seats: ['K', 'J', 'H'], aisle: true },
+                        { seats: ['G', 'F', 'E', 'D'], aisle: true },
+                        { seats: ['C', 'B', 'A'], aisle: false }
+                    ]
+                }
             }
         };
 
@@ -243,6 +254,9 @@
                 economy: {}
             },
             b777: {
+                economy: {}
+            },
+            a380: {
                 economy: {}
             }
         };
@@ -273,6 +287,7 @@
         const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
         const a350ToggleBtn = document.getElementById('a350-toggle');
         const b777ToggleBtn = document.getElementById('b777-toggle');
+        const a380ToggleBtn = document.getElementById('a380-toggle');
         const premiumEconomyToggleBtn = document.getElementById('premium-economy-toggle');
         const economyToggleBtn = document.getElementById('economy-toggle');
         const classSelectionContainer = document.getElementById('class-selection-container');
@@ -351,15 +366,28 @@
         function loadOrdersFromLocalStorage() {
             try {
                 const storedOrders = localStorage.getItem('flightOrdersCache');
-                allOrdersCache = storedOrders ? JSON.parse(storedOrders) : {
+                const defaultCache = {
                     a350: { premiumEconomy: {}, economy: {} },
-                    b777: { economy: {} }
+                    b777: { economy: {} },
+                    a380: { economy: {} }
                 };
+                if (storedOrders) {
+                    const parsedOrders = JSON.parse(storedOrders);
+                    // Merge stored orders with default structure to ensure new aircraft are added
+                    allOrdersCache = { ...defaultCache, ...parsedOrders };
+                    // Ensure all sub-objects exist
+                    if (!allOrdersCache.a350) allOrdersCache.a350 = defaultCache.a350;
+                    if (!allOrdersCache.b777) allOrdersCache.b777 = defaultCache.b777;
+                    if (!allOrdersCache.a380) allOrdersCache.a380 = defaultCache.a380;
+                } else {
+                    allOrdersCache = defaultCache;
+                }
             } catch (e) {
                 console.error("Error loading from localStorage:", e);
                 allOrdersCache = {
                     a350: { premiumEconomy: {}, economy: {} },
-                    b777: { economy: {} }
+                    b777: { economy: {} },
+                    a380: { economy: {} }
                 };
             }
         }
@@ -466,10 +494,10 @@
                 const numInnerSeatGaps = config.seatLayout.reduce((acc, group) => acc + Math.max(0, group.seats.length - 1), 0);
 
                 const totalUnits = numSeats + 
-                                (numAisles * AISLE_RATIO) + 
-                                (numLabels * LABEL_RATIO) + 
-                                (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
-                                (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
+                                 (numAisles * AISLE_RATIO) + 
+                                 (numLabels * LABEL_RATIO) + 
+                                 (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
+                                 (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
                 
                 // Calculate pixel sizes
                 const containerWidth = cabinLayoutContainer.clientWidth;
@@ -906,16 +934,21 @@
             }
 
             function updateAircraftToggleButtons() {
-                if (currentAircraft === 'a350') {
-                    a350ToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
-                    a350ToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
-                    b777ToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
-                    b777ToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
-                } else {
-                    b777ToggleBtn.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
-                    b777ToggleBtn.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
-                    a350ToggleBtn.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
-                    a350ToggleBtn.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                const buttons = {
+                    a350: a350ToggleBtn,
+                    b777: b777ToggleBtn,
+                    a380: a380ToggleBtn
+                };
+
+                for (const aircraft in buttons) {
+                    const button = buttons[aircraft];
+                    if (aircraft === currentAircraft) {
+                        button.classList.add('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                        button.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                    } else {
+                        button.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700');
+                        button.classList.remove('bg-blue-500', 'text-white', 'dark:bg-blue-700');
+                    }
                 }
             }
 
@@ -934,7 +967,8 @@
             }
 
             function updateClassToggleVisibility() {
-                if (currentAircraft === 'a350') {
+                // Only show class selection for aircraft that have more than one class defined
+                if (Object.keys(AIRCRAFT_CONFIGS[currentAircraft]).length > 1) {
                     classSelectionContainer.classList.remove('hidden');
                 } else {
                     classSelectionContainer.classList.add('hidden');
@@ -958,9 +992,18 @@
                 createCabinLayout(currentAircraft, currentClass);
                 updateUIWithOrders();
                 updateAircraftToggleButtons();
-                updateClassToggleButtons(); // Update class buttons for B777
                 updateClassToggleVisibility();
             });
+
+            a380ToggleBtn.addEventListener('click', () => {
+                currentAircraft = 'a380';
+                currentClass = 'economy'; // Only economy for A380
+                createCabinLayout(currentAircraft, currentClass);
+                updateUIWithOrders();
+                updateAircraftToggleButtons();
+                updateClassToggleVisibility();
+            });
+
 
             // Event listeners for class toggles (within A350)
             premiumEconomyToggleBtn.addEventListener('click', () => {
