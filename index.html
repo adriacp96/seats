@@ -112,7 +112,7 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-y-auto max-h-[33vh]">
+            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-auto overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
             </div>
@@ -236,11 +236,11 @@
         // Define specific seat sizing classes for each configuration
         const SEAT_SIZES_BY_CONFIG = {
             a350: {
-                premiumEconomy: { textSizeClass: 'text-sm sm:text-base' }, // Adjust text size for larger seats
-                economy: { textSizeClass: 'text-[10px] sm:text-xs' } // Adjust text size for smaller seats
+                premiumEconomy: { widthClass: 'w-12 h-12', textSizeClass: 'text-sm sm:text-base' }, // Larger seats for fewer across
+                economy: { widthClass: 'w-9 h-9', textSizeClass: 'text-[10px] sm:text-xs' } // Smaller for more across
             },
             b777: {
-                economy: { textSizeClass: 'text-[8px] sm:text-[10px]' } // Adjust text size for smallest seats
+                economy: { widthClass: 'w-8 h-8', textSizeClass: 'text-[8px] sm:text-[10px]' } // Smallest for 10 across
             }
         };
 
@@ -452,8 +452,8 @@
             cabinLayout.innerHTML = ''; // Clear existing layout
             config.rows.forEach(rowNum => {
                 const rowEl = document.createElement('div');
-                // Use justify-between to spread groups, gap-x for spacing within the row
-                rowEl.className = 'flex items-center justify-between w-full gap-x-1 sm:gap-x-2';
+                // Removed justify-between and w-full, will handle container sizing
+                rowEl.className = 'flex items-center justify-center gap-x-1 sm:gap-x-2'; // Center alignment for row content
                 
                 const rowLabel = (side) => {
                     const label = document.createElement('div');
@@ -465,12 +465,12 @@
 
                 config.seatLayout.forEach(group => {
                     const groupEl = document.createElement('div');
-                    // Use flex-1 to make groups distribute space, gap-x for spacing within the group
-                    groupEl.className = 'flex flex-1 gap-x-0.5 sm:gap-x-1'; 
+                    // Removed flex-1 from groupEl, they will now tightly wrap their fixed-size children
+                    groupEl.className = 'flex gap-x-0.5 sm:gap-x-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Apply flex-1 aspect-square for proportional sizing, along with min/max width for bounds
-                        seatEl.className = `seat flex-1 aspect-square min-w-[12px] max-w-[40px] font-bold ${seatSize.textSizeClass} bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`; 
+                        // Apply specific width/height, and ensure no flex growing/shrinking
+                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
