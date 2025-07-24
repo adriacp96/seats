@@ -111,7 +111,7 @@
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
             <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-auto">
                 <h2 class="text-xl font-semibold mb-6 text-center">Cabin Layout</h2>
-                <div class="flex flex-col items-center space-y-2 sm:space-y-4">
+                <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
             </div>
 
@@ -455,9 +455,9 @@
                     groupEl.className = 'flex space-x-1 sm:space-x-2 flex-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Use fixed width and height for seats to ensure consistent size across all layouts.
-                        // Added flex-shrink-0 to ensure they don't shrink below their defined size.
-                        seatEl.className = 'seat w-8 h-8 text-[10px] sm:w-10 sm:h-10 sm:text-xs md:w-12 md:h-12 md:text-sm font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-shrink-0'; 
+                        // Use flex-1 for seats to proportionally fill space, and min-w/max-w for constraints.
+                        // text size is made smaller for tighter fit on small screens.
+                        seatEl.className = 'seat flex-1 aspect-square min-w-[20px] max-w-[40px] font-bold text-[8px] sm:text-[10px] md:text-sm bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600'; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
@@ -501,7 +501,7 @@
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
-            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
+            drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '';
             
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600 dark:text-blue-400">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
