@@ -198,17 +198,17 @@
             premiumEconomy: {
                 rows: [16, 15, 14], // Rows from top to bottom
                 seatLayout: [
-                    { seats: ['J', 'K'], aisle: true }, // Reordered and reversed letters
-                    { seats: ['D', 'E', 'F'], aisle: true }, // Reordered and reversed letters
-                    { seats: ['A', 'B'], aisle: false } // Reordered and reversed letters
+                    { seats: ['K', 'J'], aisle: true }, // Changed to K J
+                    { seats: ['F', 'E', 'D'], aisle: true }, // Changed to F E D
+                    { seats: ['B', 'A'], aisle: false } // Changed to B A
                 ]
             },
             economy: {
                 rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
                 seatLayout: [
-                    { seats: ['J', 'H', 'G'], aisle: true }, // Reordered and reversed letters
-                    { seats: ['F', 'E', 'D'], aisle: true }, // Reordered and reversed letters
-                    { seats: ['C', 'B', 'A'], aisle: false } // Reordered and reversed letters
+                    { seats: ['J', 'H', 'G'], aisle: true },
+                    { seats: ['F', 'E', 'D'], aisle: true },
+                    { seats: ['C', 'B', 'A'], aisle: false }
                 ]
             }
         };
