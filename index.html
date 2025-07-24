@@ -656,11 +656,11 @@
                 seat.classList.remove('ordered', 'delivered');
                 // Ensure default background and border for available seats in dark mode
                 seat.classList.add('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
-                // The seat text (letter) is already set during creation and will no longer be changed here.
+                // The seat text (letter) is already set during creation
             });
 
             const currentClassOrders = allOrdersCache[currentAircraft][currentClass];
-            const sortedOrders = Object.entries(currentClassOrders).sort(([seatA, [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
+            const sortedOrders = Object.entries(currentClassOrders).sort(([seatA], [seatB]) => seatA.localeCompare(seatB, undefined, { numeric: true }));
 
             if (sortedOrders.length === 0) {
                 ordersList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 italic">No orders yet.</p>';
@@ -677,7 +677,12 @@
                     // Remove default styles before adding status-specific ones
                     seatEl.classList.remove('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
                     seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
-                    // The customer's name/initial will no longer be displayed on the seat itself. The letter remains.
+                    if (order.customerName) {
+                        // Display customer initial on the seat, with smaller text to fit
+                        const seatSize = seatEl.clientWidth;
+                        const initialTextSize = Math.max(8, seatSize * 0.5);
+                        seatEl.innerHTML = `<div style="font-size: ${initialTextSize}px" class="font-semibold truncate" title="${order.customerName}">${order.customerName.charAt(0)}</div>`;
+                    }
                 }
                 
                 const orderItem = document.createElement('div');
