@@ -112,7 +112,7 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-auto overflow-y-auto max-h-[33vh]">
+            <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
             </div>
@@ -236,11 +236,11 @@
         // Define specific seat sizing classes for each configuration
         const SEAT_SIZES_BY_CONFIG = {
             a350: {
-                premiumEconomy: { widthClass: 'w-12 h-12', textSizeClass: 'text-sm' }, // Larger seats for fewer across
-                economy: { widthClass: 'w-9 h-9', textSizeClass: 'text-[10px]' } // Smaller for more across
+                premiumEconomy: { textSizeClass: 'text-sm sm:text-base' }, // Adjust text size for larger seats
+                economy: { textSizeClass: 'text-[10px] sm:text-xs' } // Adjust text size for smaller seats
             },
             b777: {
-                economy: { widthClass: 'w-8 h-8', textSizeClass: 'text-[8px]' } // Smallest for 10 across
+                economy: { textSizeClass: 'text-[8px] sm:text-[10px]' } // Adjust text size for smallest seats
             }
         };
 
@@ -469,8 +469,8 @@
                     groupEl.className = 'flex flex-1 gap-x-0.5 sm:gap-x-1'; 
                     group.seats.forEach(seatLetter => {
                         const seatEl = document.createElement('div');
-                        // Apply fixed width and height classes, ensuring they don't grow/shrink
-                        seatEl.className = `seat ${seatSize.widthClass} ${seatSize.textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 flex-grow-0 flex-shrink-0`; 
+                        // Apply flex-1 aspect-square for proportional sizing, along with min/max width for bounds
+                        seatEl.className = `seat flex-1 aspect-square min-w-[12px] max-w-[40px] font-bold ${seatSize.textSizeClass} bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`; 
                         seatEl.dataset.seatId = `${rowNum}${seatLetter}`;
                         seatEl.textContent = seatLetter;
                         groupEl.appendChild(seatEl);
