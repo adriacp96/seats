@@ -193,13 +193,14 @@
         const FOOD_MENU = {
             'Chicken': 'fa-solid fa-drumstick-bite',
             'Beef': 'fa-solid fa-cow',
-            'Fish': 'fa-solid fa-fish', // Added Fish option
-            'Vegetarian': 'fa-solid fa-leaf' // Added Vegetarian option
+            'Fish': 'fa-solid fa-fish',
+            'Vegetarian': 'fa-solid fa-leaf',
+            'Child Meal': 'fa-solid fa-child'
         };
 
         const DRINK_MENU = {
-            "Soft Drinks": { icon: "fa-solid fa-bottle-water", items: ["Pepsi", "Diet Pepsi", "Seven Up", "Diet Seven Up", "Tonic Water", "Sparkling Water", "Water"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon' } },
-            "Hot Drinks": { icon: "fa-solid fa-mug-hot", items: ["Black Tea", "Green Tea", "Coffee"], modifiers: { 'milk': 'fa-solid fa-fill-drip', 'sugar': 'fa-solid fa-cube' } },
+            "Soft Drinks": { icon: "fa-solid fa-bottle-water", items: ["Pepsi", "Diet Pepsi", "Seven Up", "Diet Seven Up", "Tonic Water", "Sparkling Water", "Water", "Ginger Ale"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon' } },
+            "Hot Drinks": { icon: "fa-solid fa-mug-hot", items: ["Black Tea", "Green Tea", "Coffee", "Hot Water"], modifiers: { 'milk': 'fa-solid fa-fill-drip', 'sugar': 'fa-solid fa-cube' } },
             "Wines": { icon: "fa-solid fa-wine-glass", items: ["Red Wine", "White Wine", "Sparkling Wine"], modifiers: {} },
             "Spirits": { icon: "fa-solid fa-whiskey-glass", items: ["Vodka", "Gin", "Cream Liqueur", "Rum", "Cognac", "Cointreau"], modifiers: { 'ice': 'fa-solid fa-snowflake', 'lemon': 'fa-solid fa-lemon', 'mixer': 'fa-solid fa-blender' } }
         };
@@ -494,10 +495,10 @@
                 const numInnerSeatGaps = config.seatLayout.reduce((acc, group) => acc + Math.max(0, group.seats.length - 1), 0);
 
                 const totalUnits = numSeats + 
-                                 (numAisles * AISLE_RATIO) + 
-                                 (numLabels * LABEL_RATIO) + 
-                                 (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
-                                 (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
+                                   (numAisles * AISLE_RATIO) + 
+                                   (numLabels * LABEL_RATIO) + 
+                                   (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
+                                   (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
                 
                 // Calculate pixel sizes
                 const containerWidth = cabinLayoutContainer.clientWidth;
