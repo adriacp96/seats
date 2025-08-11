@@ -106,14 +106,12 @@
 <body class="bg-gray-100 dark:bg-black text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
 
     <div id="app-container" class="container mx-auto p-2 sm:p-4 md:p-8 flex-1 flex flex-col">
-        <!-- Aircraft Selection Toggle -->
         <div class="flex justify-center space-x-2 mb-2 mt-4">
             <button id="a350-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">A350</button>
             <button id="b777-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">B777-300</button>
             <button id="a380-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">A380-800</button>
         </div>
 
-        <!-- Class Selection Toggle (for A350 only) -->
         <div id="class-selection-container" class="flex justify-center space-x-2 mb-4">
             <button id="premium-economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Premium Economy</button>
             <button id="economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Economy</button>
@@ -126,7 +124,6 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <!-- Cabin Layout: Changed overflow-x-auto to overflow-x-hidden -->
             <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-900 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-hidden overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
@@ -156,7 +153,6 @@
                 <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
                    
-                    <!-- Customer Name Input -->
                     <div>
                         <label for="customer-name-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><i class="fa-solid fa-user mr-2"></i>Customer Name</label>
                         <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
@@ -167,8 +163,8 @@
                         <div id="food-selection-container" class="flex flex-wrap gap-2">
                         </div>
                         <div id="spml-details-container" class="hidden mt-4">
-                            <label for="spml-details-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SPML Details</label>
-                            <input type="text" id="spml-details-input" placeholder="e.g., Diabetic, Gluten Free" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label for="spml-details-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Special Meal</label>
+                            <select id="spml-details-select" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"></select>
                         </div>
                     </div>
 
@@ -215,6 +211,31 @@
             'Vegetarian': 'fa-solid fa-leaf',
             'Child Meal': 'fa-solid fa-child',
             'SPML': 'fa-solid fa-pen-to-square'
+        };
+
+        const SPML_OPTIONS = {
+            "Religious Meals": {
+                "AVML": "Indian Vegetarian Meal",
+                "HNML": "Non-Vegetarian Hindu Meal",
+                "VJML": "Vegetarian Jain Meal",
+                "KSML": "Kosher Meal"
+            },
+            "Medical and Dietary Meals": {
+                "BLML": "Bland Meal",
+                "DBML": "Diabetic Meal",
+                "GFML": "Gluten Friendly Meal",
+                "LFML": "Low Fat/Low Cholesterol Meal",
+                "LSML": "Low Sodium Meal",
+                "NLML": "Non-Lactose Meal",
+                "SFML": "Seafood Meal (First/Business Only)"
+            },
+            "Vegetarian Meals": {
+                "VGML": "Vegan Meal"
+            },
+            "Baby and Child Meals": {
+                "CHML": "Child Meal",
+                "BBML": "Baby Meal"
+            }
         };
 
         const DRINK_MENU = {
@@ -296,7 +317,7 @@
         const customerNameInput = document.getElementById('customer-name-input');
         const foodSelectionContainer = document.getElementById('food-selection-container');
         const spmlDetailsContainer = document.getElementById('spml-details-container');
-        const spmlDetailsInput = document.getElementById('spml-details-input');
+        const spmlDetailsSelect = document.getElementById('spml-details-select');
         const cancelBtnX = document.getElementById('cancel-btn-x');
         const deleteOrderBtn = document.getElementById('delete-order-btn');
         const drinkCategoryContainer = document.getElementById('drink-category-container');
@@ -348,12 +369,29 @@
             }, 300);
         }
 
+        function populateSpmlSelect() {
+            spmlDetailsSelect.innerHTML = '<option value="">-- Select a Meal --</option>';
+            for (const category in SPML_OPTIONS) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category;
+                for (const code in SPML_OPTIONS[category]) {
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = `${code} - ${SPML_OPTIONS[category][code]}`;
+                    optgroup.appendChild(option);
+                }
+                spmlDetailsSelect.appendChild(optgroup);
+            }
+        }
+
         function populateMenus() {
             foodSelectionContainer.innerHTML = Object.entries(FOOD_MENU).map(([item, icon]) => `
                 <button type="button" class="item-btn flex flex-col items-center justify-center p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-16 h-16 sm:w-20 sm:h-20 hover:border-blue-400 dark:hover:border-blue-500" data-item="${item}">
                     <i class="${icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
                     <span class="text-xs mt-2">${item}</span>
                 </button>`).join('');
+
+            populateSpmlSelect();
 
             Object.entries(DRINK_MENU).forEach(([category, details]) => {
                 drinkCategoryContainer.innerHTML += `
@@ -422,8 +460,8 @@
 
             let food = foodBtn.dataset.item;
             if (food === 'SPML') {
-                const details = spmlDetailsInput.value.trim();
-                return details ? `SPML (${details})` : 'SPML';
+                const spmlCode = spmlDetailsSelect.value;
+                return spmlCode ? `SPML (${spmlCode})` : 'SPML';
             }
             return food;
         }
@@ -622,7 +660,7 @@
             orderForm.reset();
             customerNameInput.value = '';
             spmlDetailsContainer.classList.add('hidden');
-            spmlDetailsInput.value = '';
+            spmlDetailsSelect.value = '';
             foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
@@ -639,13 +677,13 @@
                 
                 if (existingOrder.food) {
                     let foodName = existingOrder.food;
-                    let spmlDetails = '';
+                    let spmlCode = '';
 
                     if (foodName.startsWith('SPML')) {
                         const match = foodName.match(/^SPML \((.*)\)$/);
                         foodName = 'SPML';
                         if (match && match[1]) {
-                            spmlDetails = match[1];
+                            spmlCode = match[1];
                         }
                     }
 
@@ -654,7 +692,7 @@
                         foodBtn.classList.add('selected');
                         if (foodName === 'SPML') {
                             spmlDetailsContainer.classList.remove('hidden');
-                            spmlDetailsInput.value = spmlDetails;
+                            spmlDetailsSelect.value = spmlCode;
                         }
                     }
                 }
@@ -750,7 +788,7 @@
             if (sortedOrders.length === 0) {
                 ordersList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 italic">No orders yet.</p>';
                 clearAllBtn.disabled = true;
-                ordersBreakdown.innerHTML = ''; // Clear breakdown
+                ordersBreakdown.innerHTML = '';
                 return;
             }
 
@@ -763,14 +801,18 @@
             sortedOrders.forEach(([seatId, order]) => {
                 // --- Food Breakdown Logic ---
                 if (order.food) {
-                    let foodName = order.food.split('(')[0].trim(); // "SPML (Diabetic)" becomes "SPML"
+                    let foodName = order.food;
+                    if (foodName.startsWith('SPML')) {
+                        const match = foodName.match(/^SPML \((.*)\)$/);
+                        foodName = match ? match[1] : 'SPML'; // Use the code inside parenthesis, or SPML if none
+                    }
                     foodBreakdown[foodName] = (foodBreakdown[foodName] || 0) + 1;
                 }
 
                 // --- Drink Breakdown Logic ---
                 if (order.drink) {
-                    let drinkString = order.drink.split('(')[0].trim(); // "Vodka with Pepsi (Ice, Lemon)" -> "Vodka with Pepsi"
-                    let parts = drinkString.split(' with '); // ["Vodka", "Pepsi"]
+                    let drinkString = order.drink.split('(')[0].trim();
+                    let parts = drinkString.split(' with ');
                     parts.forEach(part => {
                         drinkBreakdown[part] = (drinkBreakdown[part] || 0) + 1;
                     });
@@ -782,11 +824,9 @@
                     seatEl.classList.remove('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
                     seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
                     if (order.customerName) {
-                        // Display customer's full name, sized to fit horizontally
                         const seatSize = seatEl.clientWidth;
-                        // Calculate a font size. Let's make it about 1/5th of the seat's width, with a minimum size.
                         const nameFontSize = Math.max(6, Math.floor(seatSize * 0.2)); 
-                        seatEl.textContent = ''; // Clear seat letter
+                        seatEl.textContent = '';
                         seatEl.innerHTML = `<div style="font-size: ${nameFontSize}px; line-height: 1.1;" class="w-full font-semibold overflow-hidden whitespace-nowrap text-center px-0.5" title="${order.customerName}">
                                                 ${order.customerName}
                                             </div>`;
@@ -865,7 +905,6 @@
                 resizeDebounceTimer = setTimeout(() => {
                     // Re-create the layout with new dimensions and re-apply order styles
                     createCabinLayout(currentAircraft, currentClass);
-                    // No need to call updateUIWithOrders here, it's called inside createCabinLayout's animation frame
                 }, 200);
             });
 
@@ -907,27 +946,23 @@
                 if (!btn) return;
 
                 const wasSelected = btn.classList.contains('selected');
-                // Deselect all buttons first
                 foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
-                // If the button was not already selected, select it now.
-                // This makes clicking a selected button a deselect action.
                 if (!wasSelected) {
                     btn.classList.add('selected');
                 }
 
-                // Handle SPML input visibility
                 if (btn.dataset.item === 'SPML' && btn.classList.contains('selected')) {
                     spmlDetailsContainer.classList.remove('hidden');
                 } else {
                     spmlDetailsContainer.classList.add('hidden');
-                    spmlDetailsInput.value = ''; // Clear input if another meal is chosen or SPML is deselected
+                    spmlDetailsSelect.value = '';
                 }
 
                 updateModalSummary();
                 debounce(autoSaveOrder, 500);
             });
             
-            spmlDetailsInput.addEventListener('input', () => {
+            spmlDetailsSelect.addEventListener('change', () => {
                 updateModalSummary();
                 debounce(autoSaveOrder, 500);
             });
