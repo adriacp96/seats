@@ -148,6 +148,10 @@
                         <h3 class="text-lg font-semibold mb-2"><i class="fa-solid fa-utensils mr-2"></i>Food</h3>
                         <div id="food-selection-container" class="flex flex-wrap gap-2">
                         </div>
+                        <div id="spml-details-container" class="hidden mt-4">
+                            <label for="spml-details-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SPML Details</label>
+                            <input type="text" id="spml-details-input" placeholder="e.g., Diabetic, Gluten Free" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
                     </div>
 
                     <div>
@@ -191,7 +195,8 @@
             'Beef': 'fa-solid fa-cow',
             'Fish': 'fa-solid fa-fish',
             'Vegetarian': 'fa-solid fa-leaf',
-            'Child Meal': 'fa-solid fa-child'
+            'Child Meal': 'fa-solid fa-child',
+            'SPML': 'fa-solid fa-pen-to-square'
         };
 
         const DRINK_MENU = {
@@ -270,6 +275,8 @@
         const seatIdInput = document.getElementById('seat-id-input');
         const customerNameInput = document.getElementById('customer-name-input');
         const foodSelectionContainer = document.getElementById('food-selection-container');
+        const spmlDetailsContainer = document.getElementById('spml-details-container');
+        const spmlDetailsInput = document.getElementById('spml-details-input');
         const cancelBtnX = document.getElementById('cancel-btn-x');
         const deleteOrderBtn = document.getElementById('delete-order-btn');
         const drinkCategoryContainer = document.getElementById('drink-category-container');
@@ -389,13 +396,24 @@
             }
         }
 
+        function getFoodSelection() {
+            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
+            if (!foodBtn) return '';
+
+            let food = foodBtn.dataset.item;
+            if (food === 'SPML') {
+                const details = spmlDetailsInput.value.trim();
+                return details ? `SPML (${details})` : 'SPML';
+            }
+            return food;
+        }
+
         function autoSaveOrder() {
             const seatId = seatIdInput.value;
             if (!seatId) return;
            
             const customerName = customerNameInput.value.trim();
-            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
-            const food = foodBtn ? foodBtn.dataset.item : '';
+            const food = getFoodSelection();
 
             let drink = '';
             const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
@@ -431,8 +449,7 @@
 
         function updateModalSummary() {
             const customerName = customerNameInput.value.trim();
-            const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
-            const food = foodBtn ? foodBtn.dataset.item : '';
+            const food = getFoodSelection();
            
             let drink = '';
             const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
@@ -584,6 +601,8 @@
         function openOrderModal(seatId) {
             orderForm.reset();
             customerNameInput.value = '';
+            spmlDetailsContainer.classList.add('hidden');
+            spmlDetailsInput.value = '';
             foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
@@ -597,9 +616,27 @@
             const existingOrder = allOrdersCache[currentAircraft][currentClass][seatId];
             if (existingOrder) {
                 customerNameInput.value = existingOrder.customerName || '';
+                
                 if (existingOrder.food) {
-                    const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
-                    if (foodBtn) foodBtn.classList.add('selected');
+                    let foodName = existingOrder.food;
+                    let spmlDetails = '';
+
+                    if (foodName.startsWith('SPML')) {
+                        const match = foodName.match(/^SPML \((.*)\)$/);
+                        foodName = 'SPML';
+                        if (match && match[1]) {
+                            spmlDetails = match[1];
+                        }
+                    }
+
+                    const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${foodName}"]`);
+                    if (foodBtn) {
+                        foodBtn.classList.add('selected');
+                        if (foodName === 'SPML') {
+                            spmlDetailsContainer.classList.remove('hidden');
+                            spmlDetailsInput.value = spmlDetails;
+                        }
+                    }
                 }
                
                 if (existingOrder.drink) {
@@ -800,18 +837,37 @@
                 updateModalSummary();
                 debounce(autoSaveOrder, 500);
             });
+
             foodSelectionContainer.addEventListener('click', (e) => {
                 const btn = e.target.closest('.item-btn');
                 if (!btn) return;
-                btn.classList.toggle('selected');
-                if (btn.classList.contains('selected')) {
-                    foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => {
-                        if (b !== btn) b.classList.remove('selected');
-                    });
+
+                const wasSelected = btn.classList.contains('selected');
+                // Deselect all buttons first
+                foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+                // If the button was not already selected, select it now.
+                // This makes clicking a selected button a deselect action.
+                if (!wasSelected) {
+                    btn.classList.add('selected');
                 }
+
+                // Handle SPML input visibility
+                if (btn.dataset.item === 'SPML' && btn.classList.contains('selected')) {
+                    spmlDetailsContainer.classList.remove('hidden');
+                } else {
+                    spmlDetailsContainer.classList.add('hidden');
+                    spmlDetailsInput.value = ''; // Clear input if another meal is chosen or SPML is deselected
+                }
+
                 updateModalSummary();
                 debounce(autoSaveOrder, 500);
             });
+            
+            spmlDetailsInput.addEventListener('input', () => {
+                updateModalSummary();
+                debounce(autoSaveOrder, 500);
+            });
+
             drinkCategoryContainer.addEventListener('click', handleDrinkCategoryClick);
             drinkAccordionContainer.addEventListener('click', (e) => {
                 if (e.target.closest('.drink-item-btn')) handleDrinkItemClick(e);
