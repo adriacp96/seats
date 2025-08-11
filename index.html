@@ -93,14 +93,12 @@
 <body class="bg-gray-100 dark:bg-black text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
 
     <div id="app-container" class="container mx-auto p-2 sm:p-4 md:p-8 flex-1 flex flex-col">
-        <!-- Aircraft Selection Toggle -->
         <div class="flex justify-center space-x-2 mb-2 mt-4">
             <button id="a350-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">A350</button>
             <button id="b777-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">B777-300</button>
             <button id="a380-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">A380-800</button>
         </div>
 
-        <!-- Class Selection Toggle (for A350 only) -->
         <div id="class-selection-container" class="flex justify-center space-x-2 mb-4">
             <button id="premium-economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-blue-500 text-white dark:bg-blue-700 dark:hover:bg-blue-600 hover:bg-blue-600 text-sm">Premium Economy</button>
             <button id="economy-toggle" class="px-3 py-1 rounded-lg font-semibold bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Economy</button>
@@ -113,7 +111,6 @@
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-            <!-- Cabin Layout: Changed overflow-x-auto to overflow-x-hidden -->
             <div id="cabin-layout" class="lg:col-span-2 bg-white dark:bg-gray-900 p-2 sm:p-6 rounded-xl shadow-lg overflow-x-hidden overflow-y-auto max-h-[33vh]">
                 <div class="flex flex-col items-center space-y-2 sm:space-y-4 w-full"> 
                 </div>
@@ -137,12 +134,11 @@
                     <h2 id="order-modal-title" class="text-2xl font-bold">Order</h2>
                     <button id="cancel-btn-x" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl">&times;</button>
             </div>
-            
+           
             <div class="flex-grow overflow-y-auto p-4 sm:p-6">
                 <form id="order-form" class="space-y-6">
                     <input type="hidden" id="seat-id-input">
-                    
-                    <!-- Customer Name Input -->
+                   
                     <div>
                         <label for="customer-name-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><i class="fa-solid fa-user mr-2"></i>Customer Name</label>
                         <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
@@ -218,7 +214,7 @@
                 economy: {
                     rows: Array.from({ length: 47 - 19 + 1 }, (_, i) => 47 - i), // Rows 47 down to 19
                     seatLayout: [
-                        { seats: ['J', 'H', 'G'], aisle: true },
+                        { seats: ['K', 'J', 'H'], aisle: true },
                         { seats: ['F', 'E', 'D'], aisle: true },
                         { seats: ['C', 'B', 'A'], aisle: false }
                     ]
@@ -293,7 +289,7 @@
         const economyToggleBtn = document.getElementById('economy-toggle');
         const classSelectionContainer = document.getElementById('class-selection-container');
 
-        
+       
         // --- FUNCTIONS ---
 
         function setupDarkMode() {
@@ -338,7 +334,7 @@
                         <i class="${details.icon} text-xl sm:text-2xl text-gray-600 dark:text-gray-300"></i>
                         <span class="text-xs mt-2 text-center">${category}</span>
                     </button>`;
-                
+               
                 drinkAccordionContainer.innerHTML += `
                     <div id="accordion-${category.replace(/\s+/g, '-')}" class="accordion-content">
                         <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -396,7 +392,7 @@
         function autoSaveOrder() {
             const seatId = seatIdInput.value;
             if (!seatId) return;
-            
+           
             const customerName = customerNameInput.value.trim();
             const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
             const food = foodBtn ? foodBtn.dataset.item : '';
@@ -407,7 +403,7 @@
                 let drinkString = selectedDrinkBtn.dataset.item;
                 const modifiers = [];
                 const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
-                
+               
                 if (parentAccordion) {
                     parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => modifiers.push(btn.dataset.modifier));
                     const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
@@ -437,14 +433,14 @@
             const customerName = customerNameInput.value.trim();
             const foodBtn = foodSelectionContainer.querySelector('.item-btn.selected');
             const food = foodBtn ? foodBtn.dataset.item : '';
-            
+           
             let drink = '';
             const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
             if (selectedDrinkBtn) {
                 let drinkString = selectedDrinkBtn.dataset.item;
                 const modifiers = [];
                 const parentAccordion = selectedDrinkBtn.closest('.accordion-content');
-                
+               
                 parentAccordion.querySelectorAll('.modifier-btn.selected').forEach(btn => modifiers.push(btn.dataset.modifier));
                 const mixerBtn = parentAccordion.querySelector('.mixer-btn.selected');
                 if (mixerBtn) drinkString += ` with ${mixerBtn.dataset.item}`;
@@ -495,11 +491,11 @@
                 const numInnerSeatGaps = config.seatLayout.reduce((acc, group) => acc + Math.max(0, group.seats.length - 1), 0);
 
                 const totalUnits = numSeats + 
-                                   (numAisles * AISLE_RATIO) + 
-                                   (numLabels * LABEL_RATIO) + 
-                                   (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
-                                   (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
-                
+                                     (numAisles * AISLE_RATIO) + 
+                                     (numLabels * LABEL_RATIO) + 
+                                     (numSeatGroupGaps * SEAT_GROUP_GAP_RATIO) + 
+                                     (numInnerSeatGaps * INNER_SEAT_GAP_RATIO);
+               
                 // Calculate pixel sizes
                 const containerWidth = cabinLayoutContainer.clientWidth;
                 const seatSize = Math.max(10, Math.floor(containerWidth / totalUnits)); // Min seat size of 10px
@@ -523,7 +519,7 @@
                         label.textContent = rowNum;
                         return label;
                     };
-                    
+                   
                     rowEl.appendChild(rowLabel('left'));
 
                     // Add a flexible spacer to center the content
@@ -535,7 +531,7 @@
                         const groupEl = document.createElement('div');
                         groupEl.className = 'flex';
                         groupEl.style.gap = `${innerSeatGap}px`;
-                        
+                       
                         group.seats.forEach(seatLetter => {
                             const seatEl = document.createElement('div');
                             seatEl.className = `seat ${textSizeClass} font-bold bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 rounded-md cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600`;
@@ -554,7 +550,7 @@
                             rowEl.appendChild(spacer);
                         }
                     });
-                    
+                   
                     const spacerRight = document.createElement('div');
                     spacerRight.className = 'flex-grow';
                     rowEl.appendChild(spacerRight);
@@ -566,7 +562,7 @@
                 updateUIWithOrders();
             });
         }
-        
+       
         function toggleModal(show) {
             if (show) {
                 modalBackdrop.classList.remove('hidden');
@@ -593,11 +589,11 @@
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             drinkAccordionContainer.querySelectorAll('.item-btn').forEach(btn => btn.classList.remove('selected'));
             drinkAccordionContainer.querySelectorAll('.modifiers-container').forEach(c => c.innerHTML = '');
-            
+           
             orderModalTitle.innerHTML = `Order for Seat <span class="text-blue-600 dark:text-blue-400">${seatId}</span>`;
             document.title = `Order for ${seatId}`;
             seatIdInput.value = seatId;
-            
+           
             const existingOrder = allOrdersCache[currentAircraft][currentClass][seatId];
             if (existingOrder) {
                 customerNameInput.value = existingOrder.customerName || '';
@@ -605,7 +601,7 @@
                     const foodBtn = foodSelectionContainer.querySelector(`.item-btn[data-item="${existingOrder.food}"]`);
                     if (foodBtn) foodBtn.classList.add('selected');
                 }
-                
+               
                 if (existingOrder.drink) {
                     let drinkName = existingOrder.drink.split('(')[0].trim();
                     let drinkParts = drinkName.split(' with ');
@@ -623,13 +619,13 @@
                             if (drinkBtn) {
                                 drinkBtn.classList.add('selected');
                                 const modifiersContainer = drinkBtn.closest('.accordion-content').querySelector('.modifiers-container');
-                                
+                               
                                 modifiersContainer.innerHTML = '';
                                 const modifierTypes = DRINK_MENU[category].modifiers;
 
                                 const modifierButtons = document.createElement('div');
                                 modifierButtons.className = 'flex flex-wrap gap-2';
-                                
+                               
                                 const mixerContainer = document.createElement('div');
 
                                 Object.entries(modifierTypes).forEach(([name, icon]) => {
@@ -674,7 +670,7 @@
                     }
                 }
             }
-            
+           
             deleteOrderBtn.classList.toggle('hidden', !existingOrder);
             updateModalSummary();
             toggleModal(true);
@@ -720,7 +716,7 @@
                                             </div>`;
                     }
                 }
-                
+               
                 const orderItem = document.createElement('div');
                 orderItem.className = 'p-3 rounded-lg border border-gray-200 dark:border-gray-700 relative flex flex-col';
                 orderItem.innerHTML = `
@@ -754,7 +750,7 @@
             setupDarkMode();
             populateMenus();
             loadOrdersFromLocalStorage();
-            
+           
             // Initial render based on default aircraft and class
             createCabinLayout(currentAircraft, currentClass);
             updateUIWithOrders();
@@ -855,10 +851,10 @@
                 const category = btn.dataset.category;
                 const targetAccordion = document.getElementById(`accordion-${category.replace(/\s+/g, '-')}`);
                 const isActive = btn.classList.contains('active');
-                
+               
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.accordion-content').forEach(acc => acc.style.maxHeight = null);
-                
+               
                 if (!isActive) {
                     btn.classList.add('active');
                     targetAccordion.style.maxHeight = targetAccordion.scrollHeight + "px";
@@ -880,7 +876,7 @@
                     btn.classList.add('selected');
                     modifiersContainer.innerHTML = '';
                     const modifierTypes = DRINK_MENU[category].modifiers;
-                    
+                   
                     const modifierButtons = document.createElement('div');
                     modifierButtons.className = 'flex flex-wrap gap-2';
                     const mixerContainer = document.createElement('div');
