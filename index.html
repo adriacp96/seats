@@ -639,7 +639,7 @@
             });
         }
        
-        function toggleModal(show) {
+        function toggleModal(show, skipAutoSave = false) {
             if (show) {
                 modalBackdrop.classList.remove('hidden');
                 setTimeout(() => {
@@ -652,7 +652,9 @@
                 setTimeout(() => {
                     modalBackdrop.classList.add('hidden');
                     document.title = "Flight Order Assistant";
-                    autoSaveOrder(); 
+                    if (!skipAutoSave) {
+                        autoSaveOrder(); 
+                    }
                 }, 300);
             }
         }
@@ -924,7 +926,7 @@
                         delete allOrdersCache[currentAircraft][currentClass][seatId];
                         saveOrdersToLocalStorage();
                         updateUIWithOrders();
-                        toggleModal(false);
+                        toggleModal(false, true); // Pass true to skip auto-save
                     });
                 }
             });
