@@ -48,6 +48,11 @@
             50%  { background-color: #DC2626; border-color: #B91C1C; }
             100% { background-color: #B91C1C; border-color: #991B1B; }
         }
+        
+        @keyframes sparkling-gold {
+            0%, 100% { box-shadow: 0 0 8px 3px rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 16px 6px rgba(255, 215, 0, 0.4); }
+        }
 
         /* Styles for ordered and delivered seats */
         .seat.ordered {
@@ -66,6 +71,12 @@
         .dark .seat.delivered {
             background-color: #15803D; /* Darker Green for dark mode */
             border-color: #14532D; /* Even darker green for dark mode border */
+        }
+        .seat.vip {
+            background-color: #FFD700; /* gold */
+            color: #4A2C00; /* dark brown text */
+            border-color: #FBBF24; /* amber-400 */
+            animation: sparkling-gold 2s infinite ease-in-out;
         }
         #modal-backdrop, #confirm-modal-backdrop {
             transition: opacity 0.3s ease-in-out;
@@ -121,6 +132,7 @@
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-blue-500 dark:bg-gray-700"></div><span class="ml-1 sm:ml-2">Available</span></div>
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-500 mr-1 sm:mr-2"></div>Ordered</div>
             <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 mr-1 sm:mr-2"></div>Delivered</div>
+            <div class="flex items-center"><div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-yellow-400 mr-1 sm:mr-2"></div>VIP</div>
         </div>
 
         <main class="flex flex-col lg:grid lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
@@ -155,7 +167,12 @@
                    
                     <div>
                         <label for="customer-name-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><i class="fa-solid fa-user mr-2"></i>Customer Name</label>
-                        <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="customer-name-input" placeholder="Enter customer's name" class="flex-grow w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" id="vip-status-btn" class="p-2 text-gray-400 hover:text-yellow-400 rounded-lg text-lg" title="Mark as VIP">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div>
@@ -316,6 +333,7 @@
         const orderForm = document.getElementById('order-form');
         const seatIdInput = document.getElementById('seat-id-input');
         const customerNameInput = document.getElementById('customer-name-input');
+        const vipStatusBtn = document.getElementById('vip-status-btn');
         const foodSelectionContainer = document.getElementById('food-selection-container');
         const spmlDetailsContainer = document.getElementById('spml-details-container');
         const spmlDetailsSelect = document.getElementById('spml-details-select');
@@ -473,6 +491,7 @@
            
             const customerName = customerNameInput.value.trim();
             const food = getFoodSelection();
+            const isVip = vipStatusBtn.classList.contains('text-yellow-400');
 
             let drink = '';
             const selectedDrinkBtn = drinkAccordionContainer.querySelector('.drink-item-btn.selected');
@@ -490,13 +509,14 @@
                 drink = drinkString;
             }
 
-            if (!food && !drink && !customerName) {
+            if (!food && !drink && !customerName && !isVip) {
                 delete allOrdersCache[currentAircraft][currentClass][seatId];
             } else {
                 allOrdersCache[currentAircraft][currentClass][seatId] = {
                     customerName: customerName,
                     food: food,
                     drink: drink,
+                    isVip: isVip,
                     status: allOrdersCache[currentAircraft][currentClass][seatId]?.status || 'ordered',
                     updatedBy: 'Local User',
                     updatedAt: new Date().toISOString()
@@ -662,6 +682,7 @@
         function openOrderModal(seatId) {
             orderForm.reset();
             customerNameInput.value = '';
+            vipStatusBtn.classList.remove('text-yellow-400');
             spmlDetailsContainer.classList.add('hidden');
             spmlDetailsSelect.value = '';
             foodSelectionContainer.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
@@ -677,6 +698,9 @@
             const existingOrder = allOrdersCache[currentAircraft][currentClass][seatId];
             if (existingOrder) {
                 customerNameInput.value = existingOrder.customerName || '';
+                if (existingOrder.isVip) {
+                    vipStatusBtn.classList.add('text-yellow-400');
+                }
                 
                 if (existingOrder.food) {
                     let foodName = existingOrder.food;
@@ -777,7 +801,7 @@
         function updateUIWithOrders() {
             // Reset all seats to their default state first, restoring the seat letter
             document.querySelectorAll('.seat').forEach(seat => {
-                seat.classList.remove('ordered', 'delivered');
+                seat.classList.remove('ordered', 'delivered', 'vip');
                 seat.classList.add('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
                 const seatId = seat.dataset.seatId;
                 const seatLetter = seatId.replace(/\d/g, ''); // Extract letter from e.g., "16K"
@@ -825,7 +849,13 @@
                 if (seatEl) {
                     // Remove default styles before adding status-specific ones
                     seatEl.classList.remove('bg-white', 'dark:bg-gray-700', 'border-blue-500', 'dark:border-blue-600');
-                    seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
+                    
+                    if (order.isVip) {
+                        seatEl.classList.add('vip');
+                    } else {
+                        seatEl.classList.add(order.status === 'delivered' ? 'delivered' : 'ordered');
+                    }
+
                     if (order.customerName) {
                         const seatSize = seatEl.clientWidth;
                         const nameFontSize = Math.max(6, Math.floor(seatSize * 0.2)); 
@@ -841,7 +871,9 @@
                 orderItem.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex-grow">
-                            <h3 class="font-bold text-lg text-gray-700 dark:text-gray-200">Seat ${seatId}</h3>
+                            <h3 class="font-bold text-lg text-gray-700 dark:text-gray-200">
+                                ${order.isVip ? '<i class="fa-solid fa-star text-yellow-400 mr-1"></i>' : ''}Seat ${seatId}
+                            </h3>
                             ${order.customerName ? `<p class="text-sm font-semibold text-blue-600 dark:text-blue-400">${order.customerName}</p>` : ''}
                         </div>
                         <div class="flex items-center space-x-1 flex-shrink-0">
@@ -937,6 +969,11 @@
             });
 
             confirmCancelBtn.addEventListener('click', hideConfirmModal);
+
+            vipStatusBtn.addEventListener('click', () => {
+                vipStatusBtn.classList.toggle('text-yellow-400');
+                debounce(autoSaveOrder, 500);
+            });
 
             // Debounced auto-saving for form inputs
             customerNameInput.addEventListener('input', () => {
